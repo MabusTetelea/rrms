@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { replies, reviews } from "@/db/schema";
+import { locations, replies, reviews } from "@/db/schema";
 import { generateSuggestions } from "@/lib/ai/suggest";
 import { isOpenRouterConfigured } from "@/lib/ai/openrouter";
 import { currentUserOrNull, type SessionUser } from "@/lib/auth/session";
@@ -158,6 +158,66 @@ export async function syncAction(): Promise<SyncActionResult> {
       locations: results.reduce((sum, r) => sum + r.locationsUpserted, 0),
       sources: results.map((r) => r.source),
     };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Fold one location into another, so the same physical shop listed on two
+ * platforms counts once. Admin-only: it changes every rating and backlog figure
+ * on the dashboard.
+ */
+export async function mergeLocationAction(
+  sourceId: string,
+  targetId: string,
+): Promise<ActionResult> {
+  if (!(await requireAdminUser())) return NOT_ADMIN;
+  if (sourceId === targetId) {
+    return { ok: false, error: "A store cannot be merged into itself." };
+  }
+
+  try {
+    const [target] = await db
+      .select({ id: locations.id, mergedInto: locations.mergedInto })
+      .from(locations)
+      .where(eq(locations.id, targetId));
+
+    if (!target) return { ok: false, error: "Target store not found." };
+    // Only one level of merging — otherwise the rollup needs a recursive CTE.
+    if (target.mergedInto) {
+      return { ok: false, error: "That store is itself merged into another one." };
+    }
+
+    // Anything already pointing at the row being merged has to follow it over,
+    // or it would be orphaned behind a non-canonical parent.
+    await db
+      .update(locations)
+      .set({ mergedInto: targetId, updatedAt: new Date() })
+      .where(eq(locations.mergedInto, sourceId));
+
+    await db
+      .update(locations)
+      .set({ mergedInto: targetId, updatedAt: new Date() })
+      .where(eq(locations.id, sourceId));
+
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function unmergeLocationAction(id: string): Promise<ActionResult> {
+  if (!(await requireAdminUser())) return NOT_ADMIN;
+
+  try {
+    await db
+      .update(locations)
+      .set({ mergedInto: null, updatedAt: new Date() })
+      .where(eq(locations.id, id));
+    revalidatePath("/", "layout");
+    return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }

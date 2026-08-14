@@ -153,6 +153,15 @@ const en = {
     of: "of",
   },
 
+  merge: {
+    title: "Listings",
+    hint: "The same shop appears once per platform. Fold them together so its rating and backlog are counted once.",
+    thisListing: "This store's own listing",
+    pick: "Add a listing…",
+    action: "Merge in",
+    separate: "Separate",
+  },
+
   sort: {
     label: "Order",
     worst: "Worst first",
@@ -389,6 +398,15 @@ const ro: Dict = {
     of: "din",
   },
 
+  merge: {
+    title: "Listări",
+    hint: "Același magazin apare o dată pe fiecare platformă. Unește-le ca ratingul și restanța să fie numărate o singură dată.",
+    thisListing: "Listarea proprie a magazinului",
+    pick: "Adaugă o listare…",
+    action: "Unește",
+    separate: "Separă",
+  },
+
   sort: {
     label: "Ordine",
     worst: "Cele slabe primele",
@@ -619,6 +637,15 @@ const ru: Dict = {
     statusReplied: "Отвечено",
     statusSkipped: "Пропущено",
     of: "из",
+  },
+
+  merge: {
+    title: "Карточки",
+    hint: "Один и тот же магазин есть на каждой платформе. Объедините их, чтобы рейтинг и очередь считались один раз.",
+    thisListing: "Собственная карточка магазина",
+    pick: "Добавить карточку…",
+    action: "Объединить",
+    separate: "Разделить",
   },
 
   sort: {

@@ -130,16 +130,28 @@ One actor run covers every configured business and both interface methods are
 served from that single result — running the scraper per store would mean one
 paid run per location.
 
-### Known gap: the same store from two sources
+### The same store on two platforms
 
-Locations are keyed on `(source, external_id)`, so a store fetched from both
-Google and Yandex becomes **two rows** and appears twice in the stores list and
-the zone totals. Nothing merges them yet.
+Locations are keyed on `(source, external_id)`, so one shop fetched from both
+Google and Yandex arrives as two rows. An admin folds them together from the
+store's page: **Listings → pick the other listing → Merge in**.
 
-Auto-matching is unreliable here — the same shop is "Linella — Ciocana" on
-Google and "Линелла" on Yandex, with differently formatted addresses. The likely
-fix is an explicit mapping (a shared `store_key`) rather than fuzzy matching.
-Decide this before running two sources over the same stores in anger.
+Merging points one row's `merged_into` at the other. The target becomes
+canonical and absorbs everything: ratings, star spread, backlog, trend, and the
+inbox when filtered by that store. The merged row disappears from the stores
+list, so nothing is counted twice. **Separate** reverses it.
+
+Auto-matching is deliberately not attempted — the same shop is "Linella —
+Ciocana" on Google and "Линелла" on Yandex, with addresses in different
+languages and no coordinates from the Yandex scraper. Guessing wrong here
+silently corrupts every rating on the dashboard, so pairing is a human decision.
+
+Searching the stores list still matches on a merged listing's name, so typing
+the Russian name finds the store it belongs to.
+
+Merging is one level deep: you cannot merge into a store that is itself merged
+into another. Anything already attached to a row follows it when that row is
+merged onward.
 
 Sync from the dashboard button, the CLI, or a cron job:
 

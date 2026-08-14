@@ -1,6 +1,23 @@
-import { and, asc, count, desc, eq, gte, ilike, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
 import { locations, replies, reviews, suggestions, syncRuns } from "@/db/schema";
+
+/** Second reference to `locations` for the merge self-join. */
+const member = alias(locations, "member");
 import { storeCode } from "@/lib/format";
 import type { Topic } from "@/lib/text";
 import { isZoneId, type ZoneId } from "@/lib/zones";
@@ -55,6 +72,24 @@ export async function getOverview(): Promise<Overview> {
 // Per-store leaderboard
 // ---------------------------------------------------------------------------
 
+/**
+ * The store a review rolls up to: itself, unless it has been merged into
+ * another. Used everywhere a review is counted, so merged rows never
+ * double-count.
+ */
+/**
+ * Reviews belonging to a canonical store, including everything merged into it.
+ * Written as EXISTS so it can be dropped into any query over `reviews` without
+ * adding a join that would disturb aggregates.
+ */
+function reviewsInStore(canonicalId: string) {
+  return sql`exists (
+    select 1 from ${locations} l2
+    where l2.id = ${reviews.locationId}
+      and coalesce(l2.merged_into, l2.id) = ${canonicalId}
+  )`;
+}
+
 export type StoreStats = {
   id: string;
   name: string;
@@ -70,6 +105,8 @@ export type StoreStats = {
   negativeUnanswered: number;
   /** Counts for 1★…5★, index 0 = one star. */
   histogram: [number, number, number, number, number];
+  /** Other source rows folded into this one, e.g. the Yandex twin. */
+  mergedFrom: { id: string; source: string; name: string }[];
 };
 
 export type StoreQuery = {
@@ -81,19 +118,31 @@ export type StoreQuery = {
 };
 
 export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[]> {
-  const conditions = [eq(locations.active, true)];
+  // Canonical rows only — merged ones are folded in below.
+  const conditions = [eq(locations.active, true), isNull(locations.mergedInto)];
 
   if (query.zone) conditions.push(eq(locations.zone, query.zone));
   if (query.q?.trim()) {
     const term = `%${query.q.trim()}%`;
-    const match = or(
-      ilike(locations.name, term),
-      ilike(locations.city, term),
-      ilike(locations.address, term),
-    );
-    if (match) conditions.push(match);
+    /*
+     * Matched with EXISTS rather than against the joined `member` rows: a WHERE
+     * on the join would drop non-matching members and silently lose their
+     * reviews from the totals. This way searching the Yandex name still finds
+     * the store, with the aggregate intact.
+     */
+    conditions.push(sql`exists (
+      select 1 from ${locations} m
+      where coalesce(m.merged_into, m.id) = ${locations.id}
+        and (m.name ilike ${term} or m.city ilike ${term} or m.address ilike ${term})
+    )`);
   }
 
+  /*
+   * Self-join: every location rolls up to `coalesce(merged_into, id)`, so a
+   * canonical row collects its own reviews plus those of anything merged into
+   * it. Only canonical rows are returned, which is what stops a store that
+   * exists on both Google and Yandex being listed and counted twice.
+   */
   const rows = await db
     .select({
       id: locations.id,
@@ -111,9 +160,17 @@ export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[
       s3: sql<number>`count(${reviews.id}) filter (where ${reviews.rating} = 3)::int`,
       s4: sql<number>`count(${reviews.id}) filter (where ${reviews.rating} = 4)::int`,
       s5: sql<number>`count(${reviews.id}) filter (where ${reviews.rating} = 5)::int`,
+      mergedFrom: sql<{ id: string; source: string; name: string }[]>`
+        coalesce(
+          jsonb_agg(distinct jsonb_build_object(
+            'id', ${member.id}, 'source', ${member.source}, 'name', ${member.name}
+          )) filter (where ${member.id} is not null and ${member.id} <> ${locations.id}),
+          '[]'::jsonb
+        )`,
     })
     .from(locations)
-    .leftJoin(reviews, eq(reviews.locationId, locations.id))
+    .leftJoin(member, eq(sql`coalesce(${member.mergedInto}, ${member.id})`, locations.id))
+    .leftJoin(reviews, eq(reviews.locationId, member.id))
     .where(and(...conditions))
     .groupBy(locations.id)
     .orderBy(
@@ -137,12 +194,31 @@ export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[
     unanswered: r.unanswered,
     negativeUnanswered: r.negativeUnanswered,
     histogram: [r.s1, r.s2, r.s3, r.s4, r.s5],
+    mergedFrom: r.mergedFrom ?? [],
   }));
 }
 
 export async function getStore(id: string): Promise<StoreStats | null> {
   const all = await getStoreStats();
-  return all.find((s) => s.id === id) ?? null;
+  const direct = all.find((s) => s.id === id);
+  if (direct) return direct;
+  // Asked for a merged row — show the canonical store it belongs to.
+  return all.find((s) => s.mergedFrom.some((m) => m.id === id)) ?? null;
+}
+
+/** Locations that can still be merged into something (canonical, not itself). */
+export async function getMergeCandidates(excludeId: string) {
+  return db
+    .select({
+      id: locations.id,
+      name: locations.name,
+      source: locations.source,
+      city: locations.city,
+      address: locations.address,
+    })
+    .from(locations)
+    .where(and(isNull(locations.mergedInto), ne(locations.id, excludeId)))
+    .orderBy(asc(locations.name));
 }
 
 // ---------------------------------------------------------------------------
@@ -319,7 +395,7 @@ export async function getInbox(query: InboxQuery = {}): Promise<InboxItem[]> {
   const { filter = "unanswered", locationId, q, sort = "worst", limit = 200 } = query;
 
   const conditions = [filterCondition(filter)];
-  if (locationId) conditions.push(eq(reviews.locationId, locationId));
+  if (locationId) conditions.push(reviewsInStore(locationId));
   if (q?.trim()) {
     const term = `%${q.trim()}%`;
     conditions.push(
@@ -364,7 +440,7 @@ export async function getInbox(query: InboxQuery = {}): Promise<InboxItem[]> {
 }
 
 export async function countInboxByFilter(locationId?: string) {
-  const base = locationId ? eq(reviews.locationId, locationId) : undefined;
+  const base = locationId ? reviewsInStore(locationId) : undefined;
 
   const [row] = await db
     .select({
@@ -479,9 +555,10 @@ export async function getRecentReviewsForStore(locationId: string, limit = 12) {
       authorName: reviews.authorName,
       publishedAt: reviews.publishedAt,
       status: reviews.status,
+      source: reviews.source,
     })
     .from(reviews)
-    .where(eq(reviews.locationId, locationId))
+    .where(reviewsInStore(locationId))
     .orderBy(desc(reviews.publishedAt))
     .limit(limit);
 }
@@ -496,7 +573,7 @@ export async function getStoreTrend(locationId: string, months = 6) {
       total: sql<number>`count(*)::int`,
     })
     .from(reviews)
-    .where(and(eq(reviews.locationId, locationId), gte(reviews.publishedAt, since)))
+    .where(and(reviewsInStore(locationId), gte(reviews.publishedAt, since)))
     .groupBy(sql`date_trunc('month', ${reviews.publishedAt})`)
     .orderBy(asc(sql`date_trunc('month', ${reviews.publishedAt})`));
 

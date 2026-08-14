@@ -76,12 +76,22 @@ export const locations = pgTable(
     reportedRating: numeric("reported_rating", { precision: 2, scale: 1 }),
     reportedReviewCount: integer("reported_review_count"),
     active: boolean("active").notNull().default(true),
+    /**
+     * The same physical shop shows up once per source — as "Linella — Ciocana"
+     * on Google and "Линелла" on Yandex. Pointing one at another makes the
+     * target canonical: its page, its ratings and its zone totals absorb both.
+     *
+     * Null means this row is canonical (or standalone), which is the default,
+     * so nothing changes until someone merges deliberately.
+     */
+    mergedInto: uuid("merged_into"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     unique("locations_source_external_id").on(t.source, t.externalId),
     index("locations_zone_idx").on(t.zone),
+    index("locations_merged_into_idx").on(t.mergedInto),
   ],
 );
 

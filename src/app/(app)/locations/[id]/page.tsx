@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { eq } from "drizzle-orm";
+import { MergeStores } from "@/components/merge-stores";
 import { RatingPrice, StarRow, StarSpread } from "@/components/rating";
+import { db } from "@/db";
+import { locations } from "@/db/schema";
+import { requireUser } from "@/lib/auth/session";
 import { getDict, plural } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale-server";
-import { getRecentReviewsForStore, getStore, getStoreTrend } from "@/lib/queries";
+import {
+  getMergeCandidates,
+  getRecentReviewsForStore,
+  getStore,
+  getStoreTrend,
+} from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +26,20 @@ export default async function LocationPage({
   const locale = await getLocale();
   const t = getDict(locale);
 
+  const user = await requireUser();
   const store = await getStore(id);
   if (!store) notFound();
 
-  const [recent, trend] = await Promise.all([
-    getRecentReviewsForStore(id),
-    getStoreTrend(id),
+  // getStore resolves a merged row to its canonical store, so everything below
+  // keys off store.id — using the URL id would scope the rollups to a satellite.
+  const [recent, trend, [own], candidates] = await Promise.all([
+    getRecentReviewsForStore(store.id),
+    getStoreTrend(store.id),
+    db
+      .select({ source: locations.source })
+      .from(locations)
+      .where(eq(locations.id, store.id)),
+    user.role === "admin" ? getMergeCandidates(store.id) : Promise.resolve([]),
   ]);
 
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
@@ -119,6 +137,30 @@ export default async function LocationPage({
         </section>
 
         <aside className="space-y-8">
+          {user.role === "admin" ? (
+            <MergeStores
+              storeId={store.id}
+              storeSource={own?.source ?? "—"}
+              mergedFrom={store.mergedFrom}
+              candidates={candidates}
+              t={t}
+            />
+          ) : store.mergedFrom.length > 0 ? (
+            <section>
+              <h2 className="text-[15px] font-semibold">{t.merge.title}</h2>
+              <ul className="mt-3 border-t border-rule">
+                {store.mergedFrom.map((row) => (
+                  <li key={row.id} className="border-b border-rule py-2 text-sm">
+                    <span className="mr-2 rounded-[2px] bg-rule-soft px-1.5 py-0.5 font-mono text-[10px] tracking-[0.08em] text-ink-soft uppercase">
+                      {row.source}
+                    </span>
+                    {row.name}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <section>
             <h2 className="text-[15px] font-semibold">{t.locations.spread}</h2>
             <StarSpread histogram={store.histogram} className="mt-3 h-3" />
