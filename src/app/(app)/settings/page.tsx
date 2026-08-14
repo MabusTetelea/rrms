@@ -10,7 +10,7 @@ import { getDict } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale-server";
 import { getRecentSyncs } from "@/lib/queries";
 import { getBrandVoice } from "@/lib/settings";
-import { getReviewSource, SOURCE_NAMES } from "@/lib/sources";
+import { getReviewSources, SOURCE_NAMES } from "@/lib/sources";
 
 export const dynamic = "force-dynamic";
 
@@ -36,8 +36,11 @@ export default async function SettingsPage() {
         .orderBy(asc(users.email))
     : [];
 
-  const source = getReviewSource();
-  const sourceReady = source.isConfigured();
+  const sources = getReviewSources().map((source) => ({
+    name: source.name,
+    ready: source.isConfigured(),
+    hint: source.configHint,
+  }));
   const aiReady = isOpenRouterConfigured();
 
   const dateFormat = new Intl.DateTimeFormat(locale, {
@@ -156,25 +159,25 @@ export default async function SettingsPage() {
             <h2 className="text-[15px] font-semibold">{t.settings.sourceTitle}</h2>
             <p className="mt-0.5 text-xs text-ink-faint">{t.settings.sourceHint}</p>
             <dl className="mt-3 border-t border-rule">
-              <Row label={t.settings.sourceActive}>
-                <code className="font-mono text-[13px]">{source.name}</code>
-              </Row>
-              <Row label="Status">
-                <StatusPill
-                  ok={sourceReady}
-                  okLabel={t.settings.configured}
-                  offLabel={t.settings.notConfigured}
-                />
-              </Row>
-              <Row label="REVIEW_SOURCE">
+              {/* REVIEW_SOURCE is a list — Google and Yandex run side by side. */}
+              {sources.map((source) => (
+                <Row key={source.name} label={source.name}>
+                  <StatusPill
+                    ok={source.ready}
+                    okLabel={t.settings.configured}
+                    offLabel={t.settings.notConfigured}
+                  />
+                </Row>
+              ))}
+              <Row label={t.settings.sourceAvailable}>
                 <span className="font-mono text-[11px] text-ink-faint">
                   {SOURCE_NAMES.join(" · ")}
                 </span>
               </Row>
             </dl>
-            {!sourceReady ? (
+            {sources.some((source) => !source.ready) ? (
               <p className="mt-2 border-l-2 border-brand bg-brand-soft px-3 py-2 text-xs text-brand">
-                {source.configHint}
+                {sources.find((source) => !source.ready)?.hint}
               </p>
             ) : null}
           </section>

@@ -1,8 +1,8 @@
 import { and, eq, inArray, max, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { locations, reviews, syncRuns } from "@/db/schema";
-import { getReviewSource } from "@/lib/sources";
-import type { SourceLocation } from "@/lib/sources";
+import { getReviewSources } from "@/lib/sources";
+import type { ReviewSource, SourceLocation } from "@/lib/sources";
 import { detectLanguage, extractTopics, sentimentFromRating } from "@/lib/text";
 import { resolveZone } from "@/lib/zones";
 
@@ -15,15 +15,48 @@ export type SyncResult = {
 };
 
 /**
- * Pull locations and reviews from the configured source into Postgres.
+ * Runs every source named in REVIEW_SOURCE, one after another.
+ *
+ * Each source gets its own sync_runs row, and one failing source does not stop
+ * the others — a Yandex scraper outage shouldn't block the Google sync.
+ */
+export async function runSync(
+  options: { full?: boolean } = {},
+): Promise<SyncResult[]> {
+  const sources = getReviewSources();
+  const results: SyncResult[] = [];
+  const failures: string[] = [];
+
+  for (const source of sources) {
+    try {
+      results.push(await runSourceSync(source, options));
+    } catch (err) {
+      failures.push(
+        `${source.name}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  // Only surface an error if nothing at all succeeded; a partial sync is still
+  // worth keeping.
+  if (results.length === 0 && failures.length > 0) {
+    throw new Error(failures.join(" | "));
+  }
+
+  return results;
+}
+
+/**
+ * Pull locations and reviews from one source into Postgres.
  *
  * Re-running is safe: rows are keyed on (source, external_id), and an update
  * only touches fields the provider owns. Operator state — status, and the
  * replies/suggestions hanging off a review — is never overwritten by a sync.
  */
-export async function runSync(options: { full?: boolean } = {}): Promise<SyncResult> {
-  const source = getReviewSource();
-
+async function runSourceSync(
+  source: ReviewSource,
+  options: { full?: boolean } = {},
+): Promise<SyncResult> {
   if (!source.isConfigured()) {
     throw new Error(
       `Review source "${source.name}" is not configured. ${source.configHint}`,

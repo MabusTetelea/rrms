@@ -94,19 +94,52 @@ made-up phone numbers or links, and a sentence cap.
 
 ## Review sources
 
-`REVIEW_SOURCE` selects the adapter. All four implement the same interface in
-`src/lib/sources/types.ts`, so the rest of the app doesn't know which one is live.
+`REVIEW_SOURCE` is a **comma-separated list** — every source named there runs on
+each sync, because Google and Yandex are different audiences rather than
+alternatives:
 
-| Source | Coverage | Needs | Notes |
+```
+REVIEW_SOURCE=gbp,yandex
+```
+
+All adapters implement the same interface in `src/lib/sources/types.ts`, so the
+rest of the app doesn't know which ones are live. Each source gets its own
+`sync_runs` row, and one failing source doesn't stop the others.
+
+| Source | Platform | Needs | Notes |
 | --- | --- | --- | --- |
-| `mock` | 12 seeded stores | nothing | Default. Deterministic, so re-syncing never duplicates or shuffles data. |
-| `outscraper` | Full history, any location | `OUTSCRAPER_API_KEY` | Paid. Discovers stores by Maps search, or pin them with `OUTSCRAPER_PLACE_IDS`. |
-| `serpapi` | Recent reviews, any location | `SERPAPI_API_KEY` | Paid, paginated. Better for keeping up than backfilling. |
-| `gbp` | Full history | OAuth refresh token + Google approval | Free, but only if the account manages the Linella listings. |
+| `mock` | — | nothing | Default. Deterministic, so re-syncing never duplicates or shuffles data. |
+| `gbp` | Google | OAuth refresh token + Google approval | Free, but only if the account manages the Linella listings. |
+| `outscraper` | Google | `OUTSCRAPER_API_KEY` | Paid. Discovers stores by Maps search, or pin them with `OUTSCRAPER_PLACE_IDS`. |
+| `serpapi` | Google | `SERPAPI_API_KEY` | Paid, paginated. Better for keeping up than backfilling. |
+| `yandex` | Yandex Maps | `APIFY_TOKEN` + `YANDEX_START_URLS` | See below. |
 
-**`mock` is the tested path.** The three live adapters are written against each
+**`mock` is the tested path.** The live adapters are written against each
 provider's documented response shape but have not been run against a real key —
 expect to adjust field names on first contact.
+
+### About the Yandex adapter
+
+**Yandex publishes no reviews API.** Yandex Business shows reviews to a verified
+owner in its own dashboard and offers an embeddable widget, but there is no
+public read endpoint. So this adapter goes through Apify's maintained scraper
+actor (`zen-studio/yandex-maps-reviews-scraper`, ~$2.99 per 1000 reviews), which
+does return review IDs, ratings, dates, author names and owner replies.
+
+One actor run covers every configured business and both interface methods are
+served from that single result — running the scraper per store would mean one
+paid run per location.
+
+### Known gap: the same store from two sources
+
+Locations are keyed on `(source, external_id)`, so a store fetched from both
+Google and Yandex becomes **two rows** and appears twice in the stores list and
+the zone totals. Nothing merges them yet.
+
+Auto-matching is unreliable here — the same shop is "Linella — Ciocana" on
+Google and "Линелла" on Yandex, with differently formatted addresses. The likely
+fix is an explicit mapping (a shared `store_key`) rather than fuzzy matching.
+Decide this before running two sources over the same stores in anger.
 
 Sync from the dashboard button, the CLI, or a cron job:
 

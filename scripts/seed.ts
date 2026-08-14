@@ -9,15 +9,18 @@
 import { runSync } from "../src/lib/sync";
 
 async function main() {
-  const source = process.env.REVIEW_SOURCE ?? "mock";
-  console.log(`Syncing from source: ${source}`);
+  const configured = process.env.REVIEW_SOURCE ?? "mock";
+  console.log(`Syncing from: ${configured}`);
 
-  const result = await runSync({ full: true });
+  const results = await runSync({ full: true });
 
-  console.log(
-    `Done. ${result.locationsUpserted} locations, ${result.reviewsUpserted} reviews ` +
-      `(${result.reviewsNew} new).`,
-  );
+  for (const result of results) {
+    console.log(
+      `  ${result.source}: ${result.locationsUpserted} locations, ` +
+        `${result.reviewsUpserted} reviews (${result.reviewsNew} new).`,
+    );
+  }
+  console.log("Done.");
 }
 
 main()

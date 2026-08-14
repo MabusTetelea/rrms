@@ -40,8 +40,8 @@ export async function POST(request: Request) {
   const full = new URL(request.url).searchParams.get("full") === "1";
 
   try {
-    const result = await runSync({ full });
-    return NextResponse.json(result);
+    const results = await runSync({ full });
+    return NextResponse.json({ runs: results });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },

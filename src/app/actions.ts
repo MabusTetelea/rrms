@@ -141,7 +141,7 @@ export async function setReviewStatusAction(
 }
 
 export type SyncActionResult =
-  | { ok: true; reviewsNew: number; locations: number }
+  | { ok: true; reviewsNew: number; locations: number; sources: string[] }
   | { ok: false; error: string };
 
 export async function syncAction(): Promise<SyncActionResult> {
@@ -149,12 +149,14 @@ export async function syncAction(): Promise<SyncActionResult> {
   if (!(await requireAdminUser())) return NOT_ADMIN;
 
   try {
-    const result = await runSync();
+    const results = await runSync();
     revalidatePath("/", "layout");
     return {
       ok: true,
-      reviewsNew: result.reviewsNew,
-      locations: result.locationsUpserted,
+      // One run per configured source — report the totals across all of them.
+      reviewsNew: results.reduce((sum, r) => sum + r.reviewsNew, 0),
+      locations: results.reduce((sum, r) => sum + r.locationsUpserted, 0),
+      sources: results.map((r) => r.source),
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
