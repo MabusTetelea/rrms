@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/shell";
-import { RatingPrice } from "@/components/rating";
+import { OverviewHero } from "@/components/overview-hero";
 import { StoreStrip } from "@/components/store-strip";
 import { SyncButton } from "@/components/sync-button";
 import { ZoneStrip } from "@/components/zone-strip";
@@ -53,29 +53,12 @@ export default async function DashboardPage() {
         <EmptyState title={t.dashboard.emptyTitle} body={t.dashboard.emptyBody} />
       ) : (
         <div className="px-5 py-6 md:px-8 md:py-8">
-          {/* Headline numbers ------------------------------------------- */}
-          <section className="grid grid-cols-2 border border-rule bg-surface lg:grid-cols-4">
-            <Tile label={t.dashboard.avgRating}>
-              <RatingPrice value={overview.avgRating} className="text-5xl" />
-            </Tile>
-            <Tile label={t.dashboard.totalReviews}>
-              <Figure>{overview.totalReviews}</Figure>
-            </Tile>
-            <Tile label={t.dashboard.unanswered}>
-              <Link href="/inbox" className="hover:underline">
-                <Figure tone={overview.unanswered > 0 ? "brand" : undefined}>
-                  {overview.unanswered}
-                </Figure>
-              </Link>
-            </Tile>
-            <Tile label={t.dashboard.negative}>
-              <Link href="/inbox?filter=negative" className="hover:underline">
-                <Figure tone={overview.negativeRecent > 0 ? "bad" : undefined}>
-                  {overview.negativeRecent}
-                </Figure>
-              </Link>
-            </Tile>
-          </section>
+          <OverviewHero
+            overview={overview}
+            worstZone={zonesNeedingWork[0] ?? null}
+            t={t}
+            locale={locale}
+          />
 
           <p className="mt-2 font-mono text-[11px] text-ink-faint">
             {t.dashboard.lastSync}:{" "}
@@ -111,7 +94,7 @@ export default async function DashboardPage() {
                         {t.locations.rating} · {t.dashboard.zoneBacklog}
                       </span>
                     </div>
-                    <div className="border-t border-rule">
+                    <div>
                       {zonesNeedingWork.map((zone) => (
                         <ZoneStrip
                           key={zone.zone}
@@ -133,7 +116,7 @@ export default async function DashboardPage() {
                     title={t.dashboard.backlogTitle}
                     hint={t.dashboard.backlogHint}
                   />
-                  <div className="border-t border-rule">
+                  <div>
                     {backlog.map((store) => (
                       <StoreStrip
                         key={store.id}
@@ -157,11 +140,9 @@ export default async function DashboardPage() {
             <section>
               <SectionHead title={t.dashboard.topics} hint={t.dashboard.topicsHint} />
               {topics.length === 0 ? (
-                <p className="border-t border-rule py-4 text-sm text-ink-faint">
-                  {t.common.none}
-                </p>
+                <p className="py-4 text-sm text-ink-faint">{t.common.none}</p>
               ) : (
-                <ul className="border-t border-rule">
+                <ul>
                   {topics.map((topic) => (
                     <li
                       key={topic.topic}
@@ -170,11 +151,21 @@ export default async function DashboardPage() {
                       <span className="min-w-0 truncate text-sm">
                         {t.topics[topic.topic as Topic] ?? topic.topic}
                       </span>
+                      {/* Plain figures here on purpose — the price motif is
+                          reserved for stores and zones, the things you act on. */}
                       <span className="flex shrink-0 items-baseline gap-3 font-mono text-[11px] text-ink-faint">
-                        <span className="tabular">
-                          {topic.mentions} {t.dashboard.topicMentions}
+                        <span className="tabular">{topic.mentions}</span>
+                        <span
+                          className={`figure w-9 text-right text-[13px] ${
+                            topic.avgRating < 3
+                              ? "text-bad"
+                              : topic.avgRating < 4
+                                ? "text-mid"
+                                : "text-good"
+                          }`}
+                        >
+                          {topic.avgRating.toFixed(2)}
                         </span>
-                        <RatingPrice value={topic.avgRating} className="text-base" />
                       </span>
                     </li>
                   ))}
@@ -188,29 +179,9 @@ export default async function DashboardPage() {
   );
 }
 
-function Tile({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="border-b border-r border-rule px-4 py-4 last:border-r-0 lg:border-b-0">
-      <p className="eyebrow">{label}</p>
-      <div className="mt-2.5">{children}</div>
-    </div>
-  );
-}
-
-function Figure({
-  children,
-  tone,
-}: {
-  children: React.ReactNode;
-  tone?: "brand" | "bad";
-}) {
-  const color = tone === "brand" ? "text-brand" : tone === "bad" ? "text-bad" : "";
-  return <span className={`price text-5xl ${color}`}>{children}</span>;
-}
-
 function SectionHead({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="mb-3">
+    <div className="section-rule mb-3 pb-1.5">
       <h2 className="text-[15px] font-semibold tracking-[-0.005em]">{title}</h2>
       <p className="mt-0.5 text-xs text-ink-faint">{hint}</p>
     </div>

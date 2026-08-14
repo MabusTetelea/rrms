@@ -70,9 +70,26 @@ body {
 }
 
 /*
+ * Display register. One number per screen gets this — the tally of work
+ * waiting. It's the only thing on the page allowed to shout, so nothing else
+ * competes with it.
+ */
+.display {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: clamp(3.5rem, 10vw, 7rem);
+  line-height: 0.78;
+  letter-spacing: -0.045em;
+}
+
+/*
  * The signature: a rating printed like a shelf price. The whole-number part
  * carries the weight; the decimals ride small and high, the way a price tag
  * prints its bani.
+ *
+ * Reserved for ratings, never for counts. It stops meaning "this is a score"
+ * the moment it's used for everything.
  */
 .price {
   font-family: var(--font-mono);
@@ -87,6 +104,42 @@ body {
   vertical-align: 0.72em;
   letter-spacing: 0;
   margin-left: 0.04em;
+}
+
+/* Plain tabular figure — counts, totals, anything that isn't a rating. */
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/*
+ * Keyboard hint. An operator working a hundred reviews a day should never
+ * need the mouse, and the shortcut is only useful if it's visible.
+ */
+.kbd {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 5px 4px;
+  border: 1px solid var(--color-rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+}
+
+.kbd-invert {
+  border-color: rgb(255 255 255 / 0.25);
+  background: rgb(255 255 255 / 0.1);
+  color: rgb(255 255 255 / 0.75);
+}
+
+/* Section heading rule — heavier than a row rule, so blocks read as blocks. */
+.section-rule {
+  border-bottom: 2px solid var(--color-ink);
 }
 
 /* Shared form control. */

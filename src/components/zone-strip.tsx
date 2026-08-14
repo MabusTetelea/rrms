@@ -76,7 +76,7 @@ export function ZoneStrip({
       <span className="col-start-3 row-start-1 flex items-baseline justify-self-end gap-3 sm:col-start-4">
         <RatingPrice value={zone.avgRating} className="text-lg" />
         <span
-          className={`price text-[30px] ${zone.unanswered > 0 ? "text-brand" : "text-ink-faint"}`}
+          className={`figure text-[28px] ${zone.unanswered > 0 ? "text-brand" : "text-ink-faint"}`}
         >
           {zone.unanswered}
         </span>

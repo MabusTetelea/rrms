@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { StarRow } from "@/components/rating";
 import {
   generateDraftsAction,
@@ -38,6 +38,7 @@ export function ReplyPanel({
   const [copied, setCopied] = useState(false);
   const [generating, startGenerating] = useTransition();
   const [saving, startSaving] = useTransition();
+  const composerRef = useRef<HTMLTextAreaElement>(null);
 
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "long" });
   const selectedDraft = drafts.find((d) => d.id === selectedId) ?? null;
@@ -130,6 +131,62 @@ export function ReplyPanel({
     skipped: t.inbox.statusSkipped,
   };
 
+  const pickDraft = useCallback(
+    (index: number) => {
+      const draft = drafts[index];
+      if (!draft) return;
+      setSelectedId(draft.id);
+      setText(draft.text);
+    },
+    [drafts],
+  );
+
+  /**
+   * Keyboard operation. Someone clearing eighty reviews a day shouldn't have to
+   * hit three separate mouse targets per review, so: G drafts, 1–3 pick one,
+   * Ctrl/Cmd+Enter copies and files it. Every shortcut is printed on the
+   * control it drives — an invisible shortcut is no shortcut.
+   */
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable;
+      const inComposer = target === composerRef.current;
+
+      // Ctrl/Cmd+Enter works from inside the composer too — that's the point.
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        copyAndSave();
+        return;
+      }
+
+      if (typing || inComposer || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      if (event.key >= "1" && event.key <= "9") {
+        const index = Number(event.key) - 1;
+        if (index < drafts.length) {
+          event.preventDefault();
+          pickDraft(index);
+        }
+        return;
+      }
+
+      if (event.key.toLowerCase() === "g" && aiEnabled && !generating) {
+        event.preventDefault();
+        generate();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drafts, aiEnabled, generating, text, selectedId, instruction]);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* The review ------------------------------------------------------ */}
@@ -216,6 +273,7 @@ export function ReplyPanel({
                 : drafts.length
                   ? t.inbox.regenerate
                   : t.inbox.generate}
+              {!generating ? <kbd className="kbd ml-0.5">G</kbd> : null}
             </button>
           ) : null}
         </div>
@@ -246,7 +304,25 @@ export function ReplyPanel({
           </p>
         ) : null}
 
-        {drafts.length > 0 ? (
+        {/* Placeholders keep the layout still while the model writes. */}
+        {generating ? (
+          <ul className="mt-4 grid gap-2" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <li
+                key={i}
+                className="animate-pulse rounded-[2px] border border-machine-rule bg-machine/45 px-4 py-3"
+                style={{ animationDelay: `${i * 140}ms` }}
+              >
+                <span className="block h-2 w-16 rounded-[1px] bg-machine-rule" />
+                <span className="mt-3 block h-2.5 w-full rounded-[1px] bg-machine-rule/70" />
+                <span className="mt-1.5 block h-2.5 w-11/12 rounded-[1px] bg-machine-rule/70" />
+                <span className="mt-1.5 block h-2.5 w-2/3 rounded-[1px] bg-machine-rule/70" />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {!generating && drafts.length > 0 ? (
           <ul className="mt-4 grid gap-2">
             {drafts.map((draft, index) => {
               const isSelected = draft.id === selectedId;
@@ -258,22 +334,27 @@ export function ReplyPanel({
                 >
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelectedId(draft.id);
-                      setText(draft.text);
-                    }}
+                    onClick={() => pickDraft(index)}
+                    aria-pressed={isSelected}
                     className={`w-full rounded-[2px] border px-4 py-3 text-left transition-colors ${
                       isSelected
-                        ? "border-machine-ink bg-machine"
+                        ? "border-machine-ink bg-machine ring-1 ring-machine-ink"
                         : "border-machine-rule bg-machine/45 hover:bg-machine"
                     }`}
                   >
                     <span className="flex items-center justify-between gap-3">
-                      <span className="font-mono text-[10px] tracking-[0.14em] text-machine-ink uppercase">
-                        {t.tone[draft.tone as keyof Dict["tone"]] ?? draft.tone}
+                      <span className="flex items-center gap-2">
+                        <kbd className="kbd">{index + 1}</kbd>
+                        <span className="font-mono text-[10px] tracking-[0.14em] text-machine-ink uppercase">
+                          {t.tone[draft.tone as keyof Dict["tone"]] ?? draft.tone}
+                        </span>
                       </span>
-                      <span className="font-mono text-[10px] text-ink-faint">
-                        {isSelected ? "✓" : t.inbox.useDraft}
+                      <span
+                        className={`font-mono text-[10px] ${
+                          isSelected ? "font-semibold text-machine-ink" : "text-ink-faint"
+                        }`}
+                      >
+                        {isSelected ? `✓ ${t.inbox.selected}` : t.inbox.useDraft}
                       </span>
                     </span>
                     <span className="mt-2 block font-serif text-[15px] leading-[1.55] text-ink">
@@ -295,6 +376,7 @@ export function ReplyPanel({
         <label className="block">
           <span className="eyebrow">{t.inbox.yourReply}</span>
           <textarea
+            ref={composerRef}
             value={text}
             onChange={(event) => setText(event.target.value)}
             placeholder={t.inbox.replyPlaceholder}
@@ -308,9 +390,10 @@ export function ReplyPanel({
             type="button"
             onClick={copyAndSave}
             disabled={saving || !text.trim()}
-            className="rounded-[2px] bg-ink px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-[2px] bg-ink px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-40"
           >
             {copied ? t.inbox.copied : t.inbox.copyReply}
+            <kbd className="kbd kbd-invert">Ctrl ⏎</kbd>
           </button>
           <button
             type="button"

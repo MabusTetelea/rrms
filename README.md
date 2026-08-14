@@ -90,7 +90,18 @@ are never overwritten.
   weakest store. Below it, the individual shops carrying the biggest queues, and
   a keyword breakdown of what customers bring up.
 - **Inbox** — filterable queue (to answer / negative / replied / skipped), sorted
-  angriest-first. Review, AI drafts, editable composer, copy, done.
+  angriest-first. Review, AI drafts, editable composer, copy, done. Built to be
+  worked from the keyboard:
+
+  | Key | Does |
+  | --- | --- |
+  | `J` / `K` | Next / previous review in the queue |
+  | `G` | Draft replies for the open review |
+  | `1` `2` `3` | Load that draft into the composer |
+  | `Ctrl`/`Cmd` + `Enter` | Copy the reply and mark it answered |
+
+  Every shortcut is printed on the control it drives — an invisible shortcut is
+  no shortcut.
 - **Stores** — searchable by name, city or street; grouped by zone, worst rated
   first inside each. Per-store page has rating, star distribution, six-month
   trend and recent reviews.

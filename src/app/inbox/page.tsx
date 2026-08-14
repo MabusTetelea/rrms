@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { InboxFilters } from "@/components/inbox-filters";
+import { QueueKeys } from "@/components/queue-keys";
 import { StarRow } from "@/components/rating";
 import { ReplyPanel } from "@/components/reply-panel";
 import { isOpenRouterConfigured } from "@/lib/ai/openrouter";
@@ -74,8 +75,14 @@ export default async function InboxPage({
     return `/inbox?${next.toString()}`;
   })();
 
+  const queueHrefs = items.map((item) => hrefFor(item.id));
+  const currentIndex = selectedId
+    ? items.findIndex((item) => item.id === selectedId)
+    : -1;
+
   return (
     <div className="flex flex-col md:h-screen">
+      <QueueKeys hrefs={queueHrefs} currentIndex={currentIndex} />
       <header className="shrink-0 border-b border-rule px-5 py-4 md:px-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold">{t.inbox.title}</h1>
@@ -108,6 +115,15 @@ export default async function InboxPage({
             </div>
           ) : (
             <ul>
+              <li className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-rule bg-paper/95 px-4 py-1.5 backdrop-blur">
+                <span className="figure text-[11px] text-ink-faint">
+                  {items.length}
+                </span>
+                <span className="flex items-center gap-1.5 font-mono text-[10px] text-ink-faint">
+                  <kbd className="kbd">J</kbd>
+                  <kbd className="kbd">K</kbd>
+                </span>
+              </li>
               {items.map((item) => (
                 <QueueRow
                   key={item.id}

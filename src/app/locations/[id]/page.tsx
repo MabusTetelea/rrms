@@ -65,12 +65,12 @@ export default async function LocationPage({
             </div>
             <div className="text-right">
               <p className="eyebrow">{t.locations.reviews}</p>
-              <p className="price text-3xl">{store.totalReviews}</p>
+              <p className="figure text-3xl">{store.totalReviews}</p>
             </div>
             <div className="text-right">
               <p className="eyebrow">{t.locations.unanswered}</p>
               <p
-                className={`price text-3xl ${store.unanswered > 0 ? "text-brand" : ""}`}
+                className={`figure text-3xl ${store.unanswered > 0 ? "text-brand" : ""}`}
               >
                 {store.unanswered}
               </p>
