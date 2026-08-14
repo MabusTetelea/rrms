@@ -81,8 +81,13 @@ Get a key at https://openrouter.ai/keys, then in `.env.local`:
 
 ```
 OPENROUTER_API_KEY=sk-or-...
-OPENROUTER_MODEL=anthropic/claude-sonnet-4.5
+OPENROUTER_MODEL=anthropic/claude-sonnet-5
 ```
+
+Sonnet 5 is the default because this job is short bilingual text under strict
+rules, not deep reasoning: strong Romanian and Russian, fast enough that an
+operator isn't left waiting, and roughly half a cent per review. Swap the slug
+for any model on https://openrouter.ai/anthropic — nothing else changes.
 
 Restart the dev server. The **Draft replies** button appears in the inbox; until
 then the panel says so plainly and the manual composer still works.

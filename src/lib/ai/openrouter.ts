@@ -5,7 +5,7 @@
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
-export const DEFAULT_MODEL = "anthropic/claude-sonnet-4.5";
+export const DEFAULT_MODEL = "anthropic/claude-sonnet-5";
 
 export class OpenRouterNotConfiguredError extends Error {
   constructor() {
