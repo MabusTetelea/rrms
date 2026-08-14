@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+/*
+ * Design language: grocery shelf-edge labels.
+ *
+ * The operator reads ratings all day the way a shopper reads price tags, so
+ * ratings are set like prices — oversized tabular figures with a small raised
+ * fraction — and every store row is a shelf strip with a colour band that
+ * encodes its rating. Customer words are set in a serif, interface words in a
+ * grotesque, codes and figures in mono: three voices, never mixed up.
+ */
+
+@theme {
+  --color-ink: #14201b;
+  --color-ink-soft: #56615b;
+  --color-ink-faint: #8b938d;
+  --color-paper: #fbfaf8;
+  --color-surface: #ffffff;
+  --color-rule: #e3e1d9;
+  --color-rule-soft: #efeee8;
+
+  /* Linella signage red — reserved for alerts and the brand mark. */
+  --color-brand: #ce1b24;
+  --color-brand-soft: #fdf0ef;
+
+  /* Rating bands. */
+  --color-good: #1c7a4a;
+  --color-good-soft: #e8f3ec;
+  --color-mid: #b57611;
+  --color-mid-soft: #fbf2e0;
+  --color-bad: #c3352c;
+  --color-bad-soft: #fceeec;
+
+  /* Machine-written text is visually separated from human-written text. */
+  --color-machine: #f0f1f6;
+  --color-machine-ink: #3b4079;
+  --color-machine-rule: #dcdeeb;
+
+  --font-sans: var(--font-golos), system-ui, sans-serif;
+  --font-serif: var(--font-pt-serif), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+html {
+  background: var(--color-paper);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" off;
+}
+
+/* Utility layer -------------------------------------------------------- */
+
+/* Small uppercase label used for eyebrows, column heads and tone chips. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+
+/* Figures that need to line up in columns. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/*
+ * The signature: a rating printed like a shelf price. The whole-number part
+ * carries the weight; the decimals ride small and high, the way a price tag
+ * prints its bani.
+ */
+.price {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.03em;
+}
+
+.price-fraction {
+  font-size: 0.5em;
+  vertical-align: 0.72em;
+  letter-spacing: 0;
+  margin-left: 0.04em;
+}
+
+/* Shared form control. */
+.input {
+  width: 100%;
+  border: 1px solid var(--color-rule);
+  background: var(--color-surface);
+  border-radius: 2px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-ink);
+}
+
+.input::placeholder {
+  color: var(--color-ink-faint);
+}
+
+/* Focus is always visible; operators live on the keyboard. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Drafts arrive asynchronously — the motion says "this is new". */
+@keyframes draft-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.draft-in {
+  animation: draft-in 260ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Thin scrollbars inside the queue and draft panes. */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule) transparent;
+}
