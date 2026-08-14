@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Golos_Text, IBM_Plex_Mono, PT_Serif } from "next/font/google";
 import "./globals.css";
-import { Shell } from "@/components/shell";
 import { getLocale } from "@/lib/locale-server";
 
 /*
@@ -45,9 +44,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang={locale}
       className={`${golos.variable} ${ptSerif.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
-        <Shell>{children}</Shell>
-      </body>
+      {/* The shell (sidebar, nav) lives in the (app) group — the sign-in page
+          renders bare. */}
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

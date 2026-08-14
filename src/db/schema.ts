@@ -17,6 +17,45 @@ import {
  * sentiment) lives alongside it so a re-sync never clobbers our own work.
  */
 
+/**
+ * Operators of the desk. Passwords are scrypt hashes (see lib/auth/password);
+ * this table never holds anything reversible.
+ */
+export const users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  // Stored lower-cased so sign-in is case-insensitive without a citext extension.
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  // operator | admin
+  role: text("role").notNull().default("operator"),
+  // Disabling beats deleting: replies keep pointing at a real person.
+  active: boolean("active").notNull().default(true),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Server-side sessions rather than a self-contained token, so that disabling an
+ * account or signing out actually ends access immediately.
+ *
+ * Only the SHA-256 of the cookie value is stored — a leaked database dump
+ * doesn't hand anyone a working session.
+ */
+export const sessions = pgTable(
+  "sessions",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
 export const locations = pgTable(
   "locations",
   {
@@ -118,6 +157,9 @@ export const replies = pgTable(
     text: text("text").notNull(),
     // True when the final text differs from the suggestion it started as.
     edited: boolean("edited").notNull().default(false),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    // Display name snapshotted at publish time, so the audit trail survives a
+    // rename or a deleted account.
     operator: text("operator"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -144,6 +186,8 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export type User = typeof users.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
 export type Location = typeof locations.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Suggestion = typeof suggestions.$inferSelect;

@@ -49,6 +49,27 @@ const en = {
     language: "Language",
   },
 
+  login: {
+    title: "Sign in",
+    subtitle: "The review desk is for Linella staff.",
+    pitch: "Every review, in one queue — answered in the language it was written in.",
+    email: "Email",
+    password: "Password",
+    signIn: "Sign in",
+    signingIn: "Signing in",
+    invalid: "That email and password don't match an account.",
+    throttled: "Too many attempts. Wait a few minutes and try again.",
+    betaTag: "Beta",
+    quickTitle: "Quick sign-in",
+    quickHint: "Demo accounts for testing. Turn this off before real customer data.",
+    asAdmin: "Sign in as admin",
+    asOperator: "Sign in as operator",
+    signOut: "Sign out",
+    roleAdmin: "Admin",
+    roleOperator: "Operator",
+    adminOnly: "Admins only.",
+  },
+
   dashboard: {
     title: "Overview",
     subtitle: "Where unanswered reviews are piling up, zone by zone.",
@@ -180,6 +201,14 @@ const en = {
     model: "Model",
     syncHistory: "Recent syncs",
     noSyncs: "No syncs recorded yet.",
+    accessTitle: "Who has access",
+    accessHint: "There is no self-signup. Accounts are created from the command line.",
+    accountName: "Account",
+    accountRole: "Role",
+    accountLastLogin: "Last sign-in",
+    accessCli: "Add someone:",
+    quickLoginOn:
+      "Quick sign-in is on, so anyone reaching the login page can enter as the demo admin. Set ENABLE_QUICK_LOGIN=false before real data.",
   },
 
   topics: {
@@ -246,6 +275,27 @@ const ro: Dict = {
     none: "Niciunul",
     search: "Caută în recenzii",
     language: "Limbă",
+  },
+
+  login: {
+    title: "Autentificare",
+    subtitle: "Ghișeul de recenzii este pentru echipa Linella.",
+    pitch: "Toate recenziile într-o singură listă — cu răspuns în limba în care au fost scrise.",
+    email: "Email",
+    password: "Parolă",
+    signIn: "Intră în cont",
+    signingIn: "Se conectează",
+    invalid: "Emailul și parola nu corespund niciunui cont.",
+    throttled: "Prea multe încercări. Așteaptă câteva minute.",
+    betaTag: "Beta",
+    quickTitle: "Autentificare rapidă",
+    quickHint: "Conturi demo pentru testare. Dezactivează înainte de date reale.",
+    asAdmin: "Intră ca administrator",
+    asOperator: "Intră ca operator",
+    signOut: "Ieși din cont",
+    roleAdmin: "Administrator",
+    roleOperator: "Operator",
+    adminOnly: "Doar administratorii.",
   },
 
   dashboard: {
@@ -379,6 +429,14 @@ const ro: Dict = {
     model: "Model",
     syncHistory: "Sincronizări recente",
     noSyncs: "Nicio sincronizare înregistrată.",
+    accessTitle: "Cine are acces",
+    accessHint: "Nu există înregistrare liberă. Conturile se creează din linia de comandă.",
+    accountName: "Cont",
+    accountRole: "Rol",
+    accountLastLogin: "Ultima intrare",
+    accessCli: "Adaugă pe cineva:",
+    quickLoginOn:
+      "Autentificarea rapidă e activă, deci oricine ajunge la pagina de login poate intra ca administrator demo. Setează ENABLE_QUICK_LOGIN=false înainte de date reale.",
   },
 
   topics: {
@@ -441,6 +499,27 @@ const ru: Dict = {
     none: "Нет",
     search: "Поиск по отзывам",
     language: "Язык",
+  },
+
+  login: {
+    title: "Вход",
+    subtitle: "Отзывы — для сотрудников Linella.",
+    pitch: "Все отзывы в одной очереди — ответ на том языке, на котором написан отзыв.",
+    email: "Эл. почта",
+    password: "Пароль",
+    signIn: "Войти",
+    signingIn: "Вход",
+    invalid: "Почта и пароль не подходят ни к одному аккаунту.",
+    throttled: "Слишком много попыток. Подождите несколько минут.",
+    betaTag: "Бета",
+    quickTitle: "Быстрый вход",
+    quickHint: "Демо-аккаунты для тестов. Отключите до работы с реальными данными.",
+    asAdmin: "Войти как администратор",
+    asOperator: "Войти как оператор",
+    signOut: "Выйти",
+    roleAdmin: "Администратор",
+    roleOperator: "Оператор",
+    adminOnly: "Только для администраторов.",
   },
 
   dashboard: {
@@ -574,6 +653,14 @@ const ru: Dict = {
     model: "Модель",
     syncHistory: "Последние синхронизации",
     noSyncs: "Синхронизаций пока не было.",
+    accessTitle: "У кого есть доступ",
+    accessHint: "Самостоятельной регистрации нет. Аккаунты создаются из командной строки.",
+    accountName: "Аккаунт",
+    accountRole: "Роль",
+    accountLastLogin: "Последний вход",
+    accessCli: "Добавить человека:",
+    quickLoginOn:
+      "Быстрый вход включён — любой, кто откроет страницу входа, зайдёт как демо-администратор. Установите ENABLE_QUICK_LOGIN=false до работы с реальными данными.",
   },
 
   topics: {

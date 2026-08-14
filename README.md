@@ -37,6 +37,44 @@ Copy `.env.example` to `.env.local` and fill in what you need. Nothing is
 required to start — the default `mock` source seeds 12 stores and ~480
 Romanian/Russian reviews.
 
+## Accounts
+
+There is no self-signup. Accounts are created from the command line:
+
+```bash
+npm run user -- add anna@linella.md "Anna Rusu" admin
+```
+
+The password is generated, printed once, and never stored in the clear. Other
+commands: `list`, `passwd <email>`, `disable <email>`, `enable <email>`.
+
+**Roles.** Operators answer reviews. Admins additionally edit the brand voice,
+trigger syncs, and see who has access. Every server action checks the role
+itself — hiding a button is courtesy, not a boundary.
+
+**Sessions** are server-side rows, not self-contained tokens, so signing out or
+disabling an account ends access on the next request. Only the SHA-256 of the
+cookie is stored. Passwords are scrypt (N=32768, r=8) via Node's built-in
+crypto — no native dependency.
+
+### Quick sign-in (beta)
+
+```bash
+npm run user -- demo
+```
+
+Creates `admin@linella.md` and `operator@linella.md` and prints their passwords.
+With `ENABLE_QUICK_LOGIN=true` the login page shows one-click buttons for them,
+so the desk can be demoed without passing credentials around.
+
+This bypasses password checks, so it has three latches: it's off unless the flag
+is explicitly `true`; it refuses to run in a production build unless
+`ALLOW_QUICK_LOGIN_IN_PROD=true` as well; and it only ever matches those two
+hardcoded demo addresses, so it can never be pointed at a real account.
+
+**Turn it off and delete the demo accounts before this sees real customer data.**
+While it's on, the Settings page says so in a warning banner.
+
 ## Turning on the AI drafts
 
 Get a key at https://openrouter.ai/keys, then in `.env.local`:

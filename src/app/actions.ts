@@ -7,9 +7,28 @@ import { db } from "@/db";
 import { replies, reviews } from "@/db/schema";
 import { generateSuggestions } from "@/lib/ai/suggest";
 import { isOpenRouterConfigured } from "@/lib/ai/openrouter";
+import { currentUserOrNull, type SessionUser } from "@/lib/auth/session";
 import { LOCALE_COOKIE, isLocale } from "@/lib/i18n";
 import { DEFAULT_BRAND_VOICE, setBrandVoice } from "@/lib/settings";
 import { runSync } from "@/lib/sync";
+
+/**
+ * Server actions are individually addressable POST endpoints — the check in
+ * (app)/layout.tsx does not cover them. Every action below authenticates for
+ * itself, and returns an error rather than redirecting so the caller can show
+ * it in place.
+ */
+const DENIED = { ok: false as const, error: "Not signed in." };
+const NOT_ADMIN = { ok: false as const, error: "Admins only." };
+
+async function requireOperator(): Promise<SessionUser | null> {
+  return currentUserOrNull();
+}
+
+async function requireAdminUser(): Promise<SessionUser | null> {
+  const user = await currentUserOrNull();
+  return user?.role === "admin" ? user : null;
+}
 
 export async function setLocaleAction(locale: string) {
   if (!isLocale(locale)) return;
@@ -33,6 +52,9 @@ export async function generateDraftsAction(
   reviewId: string,
   extraInstruction?: string,
 ): Promise<DraftsResult> {
+  // Guarded first: an unauthenticated caller must not be able to spend tokens.
+  if (!(await requireOperator())) return DENIED;
+
   if (!isOpenRouterConfigured()) {
     return {
       ok: false,
@@ -69,6 +91,9 @@ export async function saveReplyAction(
   suggestionId?: string | null,
   originalSuggestionText?: string | null,
 ): Promise<ActionResult> {
+  const user = await requireOperator();
+  if (!user) return DENIED;
+
   const trimmed = text.trim();
   if (!trimmed) return { ok: false, error: "Empty reply." };
 
@@ -78,6 +103,9 @@ export async function saveReplyAction(
       suggestionId: suggestionId || null,
       text: trimmed,
       edited: Boolean(originalSuggestionText && originalSuggestionText.trim() !== trimmed),
+      userId: user.id,
+      // Snapshot the name so the trail survives a rename or a removed account.
+      operator: user.name,
     });
 
     await db
@@ -97,6 +125,8 @@ export async function setReviewStatusAction(
   reviewId: string,
   status: "new" | "in_progress" | "replied" | "skipped",
 ): Promise<ActionResult> {
+  if (!(await requireOperator())) return DENIED;
+
   try {
     await db
       .update(reviews)
@@ -115,6 +145,9 @@ export type SyncActionResult =
   | { ok: false; error: string };
 
 export async function syncAction(): Promise<SyncActionResult> {
+  // Admin-only: a sync can burn a paid provider's quota.
+  if (!(await requireAdminUser())) return NOT_ADMIN;
+
   try {
     const result = await runSync();
     revalidatePath("/", "layout");
@@ -129,6 +162,9 @@ export async function syncAction(): Promise<SyncActionResult> {
 }
 
 export async function saveBrandVoiceAction(formData: FormData): Promise<ActionResult> {
+  // Admin-only: this text steers every published reply.
+  if (!(await requireAdminUser())) return NOT_ADMIN;
+
   const maxSentences = Number(formData.get("maxSentences"));
 
   try {

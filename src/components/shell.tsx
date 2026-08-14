@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { NavLinks } from "@/components/nav-links";
+import { UserMenu } from "@/components/user-menu";
+import type { SessionUser } from "@/lib/auth/session";
 import { countInboxByFilter } from "@/lib/queries";
 import { getDict } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale-server";
 
-export async function Shell({ children }: { children: React.ReactNode }) {
+export async function Shell({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user: SessionUser;
+}) {
   const locale = await getLocale();
   const t = getDict(locale);
   const counts = await countInboxByFilter();
@@ -54,6 +62,15 @@ export async function Shell({ children }: { children: React.ReactNode }) {
         <div className="hidden px-4 pt-5 md:block">
           <p className="eyebrow mb-2 text-white/35">{t.common.language}</p>
           <LocaleSwitcher current={locale} />
+        </div>
+
+        {/* Visible at every size — signing out from a phone has to be possible. */}
+        <div className="border-t border-white/10 px-4 py-3 md:mt-6 md:py-4">
+          <UserMenu
+            user={user}
+            signOutLabel={t.login.signOut}
+            roleLabel={user.role === "admin" ? t.login.roleAdmin : t.login.roleOperator}
+          />
         </div>
       </aside>
 

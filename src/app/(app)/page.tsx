@@ -4,6 +4,7 @@ import { OverviewHero } from "@/components/overview-hero";
 import { StoreStrip } from "@/components/store-strip";
 import { SyncButton } from "@/components/sync-button";
 import { ZoneStrip } from "@/components/zone-strip";
+import { requireUser } from "@/lib/auth/session";
 import { getDict } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale-server";
 import {
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const locale = await getLocale();
   const t = getDict(locale);
+  const user = await requireUser();
 
   const [overview, zones, backlog, topics] = await Promise.all([
     getOverview(),
@@ -41,11 +43,15 @@ export default async function DashboardPage() {
         title={t.dashboard.title}
         subtitle={t.dashboard.subtitle}
         actions={
-          <SyncButton
-            label={t.dashboard.syncNow}
-            busyLabel={t.dashboard.syncing}
-            failedLabel={t.dashboard.syncFailed}
-          />
+          /* Admin-only: a sync can spend a paid provider's quota. The action
+             re-checks on the server; hiding the button is just courtesy. */
+          user.role === "admin" ? (
+            <SyncButton
+              label={t.dashboard.syncNow}
+              busyLabel={t.dashboard.syncing}
+              failedLabel={t.dashboard.syncFailed}
+            />
+          ) : null
         }
       />
 
