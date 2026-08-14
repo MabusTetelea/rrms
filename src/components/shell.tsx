@@ -45,7 +45,13 @@ export async function Shell({ children }: { children: React.ReactNode }) {
           />
         </div>
 
-        <div className="mt-auto hidden px-4 py-5 md:block">
+        {/*
+          Sits under the nav rather than pinned to the bottom of the rail. The
+          bottom-left corner of the viewport is contested space — Chrome parks
+          its link-target tooltip there, and the Next dev indicator sits there
+          too — so a control that lives in it is a control that gets covered.
+        */}
+        <div className="hidden px-4 pt-5 md:block">
           <p className="eyebrow mb-2 text-white/35">{t.common.language}</p>
           <LocaleSwitcher current={locale} />
         </div>
