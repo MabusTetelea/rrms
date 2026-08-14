@@ -5,7 +5,12 @@
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
-export const DEFAULT_MODEL = "anthropic/claude-sonnet-5";
+/**
+ * Free tier by default. The largest free model (nemotron-3-ultra-550b) can't do
+ * JSON mode, so this is the biggest one that can. Swap for a paid model in
+ * OPENROUTER_MODEL when reply quality matters more than cost.
+ */
+export const DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
 
 export class OpenRouterNotConfiguredError extends Error {
   constructor() {
@@ -33,24 +38,44 @@ export async function chatJson<T>(
 
   const model = activeModel();
 
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      // OpenRouter uses these for attribution on their dashboard.
-      "HTTP-Referer": process.env.OPENROUTER_SITE_URL ?? "http://localhost:3000",
-      "X-Title": process.env.OPENROUTER_SITE_NAME ?? "Linella Reviews",
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options.temperature ?? 0.7,
-      max_tokens: options.maxTokens ?? 1200,
-      response_format: { type: "json_object" },
-    }),
-    signal: AbortSignal.timeout(90_000),
-  });
+  /*
+   * Optional parameters are not universally supported, and the two failure
+   * modes pull in opposite directions: several free models reject
+   * `response_format` outright, while Claude's 5-series rejects a non-default
+   * `temperature`. Rather than maintain a per-model capability table, send the
+   * richer request and retry once without the optional parameters if the
+   * provider rejects it. The prompt asks for bare JSON anyway, and parseJson
+   * below salvages a fenced or prose-wrapped object.
+   */
+  async function post(withOptionalParams: boolean) {
+    return fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        // OpenRouter uses these for attribution on their dashboard.
+        "HTTP-Referer": process.env.OPENROUTER_SITE_URL ?? "http://localhost:3000",
+        "X-Title": process.env.OPENROUTER_SITE_NAME ?? "Linella Reviews",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: options.maxTokens ?? 1200,
+        ...(withOptionalParams
+          ? {
+              temperature: options.temperature ?? 0.7,
+              response_format: { type: "json_object" },
+            }
+          : {}),
+      }),
+      signal: AbortSignal.timeout(90_000),
+    });
+  }
+
+  let res = await post(true);
+  if (res.status === 400) {
+    res = await post(false);
+  }
 
   if (!res.ok) {
     throw new Error(`OpenRouter ${res.status}: ${(await res.text()).slice(0, 500)}`);
@@ -62,6 +87,7 @@ export async function chatJson<T>(
     error?: { message?: string };
   };
 
+  // OpenRouter can return an error object inside a 200 response.
   if (body.error) throw new Error(`OpenRouter: ${body.error.message}`);
 
   const content = body.choices?.[0]?.message?.content;

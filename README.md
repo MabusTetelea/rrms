@@ -81,13 +81,31 @@ Get a key at https://openrouter.ai/keys, then in `.env.local`:
 
 ```
 OPENROUTER_API_KEY=sk-or-...
-OPENROUTER_MODEL=anthropic/claude-sonnet-5
+OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
 ```
 
-Sonnet 5 is the default because this job is short bilingual text under strict
-rules, not deep reasoning: strong Romanian and Russian, fast enough that an
-operator isn't left waiting, and roughly half a cent per review. Swap the slug
-for any model on https://openrouter.ai/anthropic — nothing else changes.
+The default is a **free** model. Trade-offs worth knowing before it goes near
+real customers:
+
+- **50 requests/day** on the free tier (1000/day once you've bought $10 of
+  credits at any point — the allowance is permanent, the credits aren't spent
+  on free models). One draft click is one request.
+- **Free models can route to providers that may train on your prompts.**
+  OpenRouter keeps a separate privacy toggle for free models under Settings →
+  Privacy. Reviews contain whatever customers wrote, sometimes including staff
+  names — decide deliberately. The prompt never sends the *reviewer's* name;
+  only store, rating, date, language, topic tags and the review body.
+- **Quality is unmeasured for Romanian.** Romanian is a mid-resource language
+  and free models vary a lot on it. Draft a dozen reviews in both languages and
+  read them before trusting the output.
+
+Swap the slug for anything on https://openrouter.ai/models — nothing else
+changes. `anthropic/claude-sonnet-5` (~0.5 c/review) is the quality option;
+`google/gemma-4-31b-it:free` is worth A/B testing against the default.
+
+Note: `nvidia/nemotron-3-ultra-550b-a55b:free` is the largest free model but
+**does not support JSON mode**. The client retries without `response_format`
+when a provider rejects it, so it still works — just less reliably.
 
 Restart the dev server. The **Draft replies** button appears in the inbox; until
 then the panel says so plainly and the manual composer still works.
