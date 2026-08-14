@@ -169,9 +169,6 @@ export async function saveBrandVoiceAction(formData: FormData): Promise<ActionRe
 
   try {
     await setBrandVoice({
-      companyName:
-        String(formData.get("companyName") ?? "").trim() ||
-        DEFAULT_BRAND_VOICE.companyName,
       guidelines:
         String(formData.get("guidelines") ?? "").trim() ||
         DEFAULT_BRAND_VOICE.guidelines,

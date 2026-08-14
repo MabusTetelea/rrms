@@ -27,14 +27,6 @@ export function BrandVoiceForm({ voice, t }: { voice: BrandVoice; t: Dict }) {
       }
       className="grid gap-5"
     >
-      <Field label={t.settings.companyName}>
-        <input
-          name="companyName"
-          defaultValue={voice.companyName}
-          className="input"
-        />
-      </Field>
-
       <Field label={t.settings.guidelines}>
         <textarea
           name="guidelines"

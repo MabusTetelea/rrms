@@ -12,8 +12,10 @@ import {
   getReviewDetail,
   getStoreStats,
   INBOX_FILTERS,
+  INBOX_SORTS,
   type InboxFilter,
   type InboxItem,
+  type InboxSort,
 } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -41,8 +43,13 @@ export default async function InboxPage({
   const q = one(params.q);
   const selectedId = one(params.r);
 
+  const sortParam = one(params.sort);
+  const sort: InboxSort = INBOX_SORTS.includes(sortParam as InboxSort)
+    ? (sortParam as InboxSort)
+    : "worst";
+
   const [items, counts, stores] = await Promise.all([
-    getInbox({ filter, locationId: storeId, q }),
+    getInbox({ filter, locationId: storeId, q, sort }),
     countInboxByFilter(storeId),
     getStoreStats(),
   ]);
@@ -58,22 +65,18 @@ export default async function InboxPage({
     all: t.inbox.filterAll,
   };
 
-  function hrefFor(reviewId: string) {
+  function queryFor(reviewId?: string) {
     const next = new URLSearchParams();
     next.set("filter", filter);
+    if (sort !== "worst") next.set("sort", sort);
     if (storeId) next.set("store", storeId);
     if (q) next.set("q", q);
-    next.set("r", reviewId);
+    if (reviewId) next.set("r", reviewId);
     return `/inbox?${next.toString()}`;
   }
 
-  const queueHref = (() => {
-    const next = new URLSearchParams();
-    next.set("filter", filter);
-    if (storeId) next.set("store", storeId);
-    if (q) next.set("q", q);
-    return `/inbox?${next.toString()}`;
-  })();
+  const hrefFor = (reviewId: string) => queryFor(reviewId);
+  const queueHref = queryFor();
 
   const queueHrefs = items.map((item) => hrefFor(item.id));
   const currentIndex = selectedId
@@ -94,6 +97,9 @@ export default async function InboxPage({
               count: counts[value],
             }))}
             stores={stores.map((s) => ({ id: s.id, name: s.name }))}
+            activeSort={sort}
+            sorts={INBOX_SORTS.map((value) => ({ value, label: t.sort[value] }))}
+            sortLabel={t.sort.label}
             allStoresLabel={t.inbox.allStores}
             searchLabel={t.common.search}
           />

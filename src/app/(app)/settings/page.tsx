@@ -66,7 +66,6 @@ export default async function SettingsPage() {
                 <p className="border-l-2 border-mid bg-mid-soft px-3 py-2 text-xs text-ink-soft">
                   {t.login.adminOnly}
                 </p>
-                <ReadOnly label={t.settings.companyName} value={voice.companyName} />
                 <ReadOnly label={t.settings.guidelines} value={voice.guidelines} />
                 <ReadOnly
                   label={t.settings.signature}

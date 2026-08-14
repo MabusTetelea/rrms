@@ -153,6 +153,14 @@ const en = {
     of: "of",
   },
 
+  sort: {
+    label: "Order",
+    worst: "Worst first",
+    best: "Best first",
+    newest: "Newest first",
+    oldest: "Oldest first",
+  },
+
   tone: {
     standard: "Standard",
     empathetic: "Warmer",
@@ -184,7 +192,6 @@ const en = {
     title: "Settings",
     voiceTitle: "Brand voice",
     voiceHint: "Folded into every AI prompt. Hard rules about honesty and language can't be overridden here.",
-    companyName: "Company name",
     guidelines: "Voice guidelines",
     contactChannel: "Contact channel",
     contactHint: "Left empty, replies won't offer a phone number or link. The model is told never to invent one.",
@@ -381,6 +388,14 @@ const ro: Dict = {
     of: "din",
   },
 
+  sort: {
+    label: "Ordine",
+    worst: "Cele slabe primele",
+    best: "Cele bune primele",
+    newest: "Cele mai noi primele",
+    oldest: "Cele mai vechi primele",
+  },
+
   tone: {
     standard: "Standard",
     empathetic: "Mai cald",
@@ -412,7 +427,6 @@ const ro: Dict = {
     title: "Setări",
     voiceTitle: "Tonul brandului",
     voiceHint: "Se adaugă la fiecare prompt. Regulile stricte despre onestitate și limbă nu pot fi anulate de aici.",
-    companyName: "Numele companiei",
     guidelines: "Indicații de ton",
     contactChannel: "Canal de contact",
     contactHint: "Lăsat gol, răspunsurile nu vor oferi telefon sau link. Modelul are interdicție să inventeze unul.",
@@ -605,6 +619,14 @@ const ru: Dict = {
     of: "из",
   },
 
+  sort: {
+    label: "Порядок",
+    worst: "Сначала худшие",
+    best: "Сначала лучшие",
+    newest: "Сначала новые",
+    oldest: "Сначала старые",
+  },
+
   tone: {
     standard: "Стандартный",
     empathetic: "Теплее",
@@ -636,7 +658,6 @@ const ru: Dict = {
     title: "Настройки",
     voiceTitle: "Голос бренда",
     voiceHint: "Добавляется в каждый запрос. Жёсткие правила о честности и языке отсюда не отключаются.",
-    companyName: "Название компании",
     guidelines: "Указания по тону",
     contactChannel: "Канал связи",
     contactHint: "Если пусто, ответы не предложат телефон или ссылку. Модели запрещено их выдумывать.",

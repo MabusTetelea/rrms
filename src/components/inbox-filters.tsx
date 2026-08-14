@@ -2,23 +2,30 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import type { InboxFilter } from "@/lib/queries";
+import type { InboxFilter, InboxSort } from "@/lib/queries";
 
 export type FilterOption = { value: InboxFilter; label: string; count: number };
 export type StoreOption = { id: string; name: string };
+export type SortOption = { value: InboxSort; label: string };
 
 export function InboxFilters({
   filters,
   stores,
+  sorts,
   allStoresLabel,
   searchLabel,
+  sortLabel,
   active,
+  activeSort,
 }: {
   filters: FilterOption[];
   stores: StoreOption[];
+  sorts: SortOption[];
   allStoresLabel: string;
   searchLabel: string;
+  sortLabel: string;
   active: InboxFilter;
+  activeSort: InboxSort;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -85,6 +92,19 @@ export function InboxFilters({
         {stores.map((store) => (
           <option key={store.id} value={store.id}>
             {store.name}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={activeSort}
+        onChange={(event) => navigate({ sort: event.target.value })}
+        aria-label={sortLabel}
+        className="rounded-[2px] border border-rule bg-surface px-2.5 py-1.5 text-[13px]"
+      >
+        {sorts.map((sort) => (
+          <option key={sort.value} value={sort.value}>
+            {sort.label}
           </option>
         ))}
       </select>

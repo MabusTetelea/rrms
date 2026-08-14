@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { locations, reviews, suggestions } from "@/db/schema";
 import { chatJson } from "./openrouter";
-import { getBrandVoice, type BrandVoice } from "@/lib/settings";
+import { COMPANY_NAME, getBrandVoice, type BrandVoice } from "@/lib/settings";
 import { detectLanguage } from "@/lib/text";
 
 /**
@@ -30,7 +30,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
 
 function systemPrompt(voice: BrandVoice): string {
   return [
-    `You write public replies to Google reviews for ${voice.companyName}, a supermarket chain in the Republic of Moldova.`,
+    `You write public replies to customer reviews for ${COMPANY_NAME}, a supermarket chain in the Republic of Moldova.`,
     "",
     "BRAND VOICE:",
     voice.guidelines,

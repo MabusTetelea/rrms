@@ -6,8 +6,10 @@ import { appSettings } from "@/db/schema";
  * Brand voice is editable at runtime (Settings page) rather than hardcoded in
  * the prompt, so customer-care can tune the tone without a deploy.
  */
+/** The chain never changes, so it isn't a setting. */
+export const COMPANY_NAME = "Linella";
+
 export type BrandVoice = {
-  companyName: string;
   /** Free text folded into the system prompt. */
   guidelines: string;
   /**
@@ -22,7 +24,6 @@ export type BrandVoice = {
 };
 
 export const DEFAULT_BRAND_VOICE: BrandVoice = {
-  companyName: "Linella",
   guidelines: [
     "Warm, respectful and concrete. Speak like a person from the store team, not a press office.",
     "For criticism: acknowledge the specific problem, apologise plainly, say what will be checked or done.",

@@ -267,10 +267,19 @@ export type InboxItem = {
   hasExistingReply: boolean;
 };
 
+/**
+ * Queue ordering. "worst" is the default because an angry review left
+ * unanswered costs more than a five-star one, but a run of praise is
+ * sometimes the faster way to clear a backlog — hence the choice.
+ */
+export const INBOX_SORTS = ["worst", "best", "newest", "oldest"] as const;
+export type InboxSort = (typeof INBOX_SORTS)[number];
+
 export type InboxQuery = {
   filter?: InboxFilter;
   locationId?: string;
   q?: string;
+  sort?: InboxSort;
   limit?: number;
 };
 
@@ -292,8 +301,22 @@ function filterCondition(filter: InboxFilter) {
   }
 }
 
+function orderFor(sort: InboxSort) {
+  switch (sort) {
+    case "best":
+      return [desc(reviews.rating), desc(reviews.publishedAt)];
+    case "newest":
+      return [desc(reviews.publishedAt)];
+    case "oldest":
+      return [asc(reviews.publishedAt)];
+    case "worst":
+    default:
+      return [asc(reviews.rating), desc(reviews.publishedAt)];
+  }
+}
+
 export async function getInbox(query: InboxQuery = {}): Promise<InboxItem[]> {
-  const { filter = "unanswered", locationId, q, limit = 200 } = query;
+  const { filter = "unanswered", locationId, q, sort = "worst", limit = 200 } = query;
 
   const conditions = [filterCondition(filter)];
   if (locationId) conditions.push(eq(reviews.locationId, locationId));
@@ -322,8 +345,7 @@ export async function getInbox(query: InboxQuery = {}): Promise<InboxItem[]> {
     .from(reviews)
     .innerJoin(locations, eq(reviews.locationId, locations.id))
     .where(where.length ? and(...where) : undefined)
-    // Angriest first within the queue: low ratings are the ones that cost money.
-    .orderBy(asc(reviews.rating), desc(reviews.publishedAt))
+    .orderBy(...orderFor(sort))
     .limit(limit);
 
   return rows.map((r) => ({
