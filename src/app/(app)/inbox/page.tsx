@@ -4,6 +4,7 @@ import { QueueKeys } from "@/components/queue-keys";
 import { StarRow } from "@/components/rating";
 import { ReplyPanel } from "@/components/reply-panel";
 import { isOpenRouterConfigured } from "@/lib/ai/openrouter";
+import { getPublishingSource } from "@/lib/sources";
 import { getDict } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale-server";
 import {
@@ -56,6 +57,9 @@ export default async function InboxPage({
 
   const selected = selectedId ? await getReviewDetail(selectedId) : null;
   const aiEnabled = isOpenRouterConfigured();
+  // Only offer Publish for reviews that came from the source that can publish.
+  const publisher = getPublishingSource();
+  const publishEnabled = Boolean(publisher && selected?.source === publisher.name);
 
   const filterLabels: Record<InboxFilter, string> = {
     unanswered: t.inbox.filterUnanswered,
@@ -160,6 +164,7 @@ export default async function InboxPage({
                 t={t}
                 locale={locale}
                 aiEnabled={aiEnabled}
+                publishEnabled={publishEnabled}
               />
             </>
           ) : (

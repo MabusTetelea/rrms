@@ -1,4 +1,4 @@
-import type { ReviewSource, SourceLocation, SourceReview } from "./types";
+import type { ReplyCapableSource, SourceLocation, SourceReview } from "./types";
 
 /**
  * Google Business Profile — free and complete, but only if the Google account
@@ -45,7 +45,7 @@ type GbpReview = {
   reviewReply?: { comment?: string; updateTime?: string };
 };
 
-export class GbpSource implements ReviewSource {
+export class GbpSource implements ReplyCapableSource {
   readonly name = "gbp";
   readonly configHint =
     "Set GBP_CLIENT_ID, GBP_CLIENT_SECRET, GBP_REFRESH_TOKEN and GBP_ACCOUNT_ID.";
@@ -87,6 +87,54 @@ export class GbpSource implements ReviewSource {
       expiresAt: Date.now() + json.expires_in * 1000,
     };
     return this.token.value;
+  }
+
+  /**
+   * Publishing is a separate switch from reading. Credentials alone aren't
+   * enough of a reason to start writing to a public profile.
+   */
+  canPublish() {
+    return this.isConfigured() && process.env.PUBLISH_REPLIES === "true";
+  }
+
+  /**
+   * PUT .../reviews/{reviewId}/reply — creates the reply, or replaces it if one
+   * already exists (Google models an edit as an overwrite). Google rejects this
+   * for locations that aren't verified in Business Profile, which surfaces here
+   * as a 403 with that reason in the body.
+   */
+  async postReply(input: {
+    locationExternalId: string;
+    reviewExternalId: string;
+    text: string;
+  }): Promise<void> {
+    if (!this.canPublish()) {
+      throw new Error(
+        "Publishing to Google is off. Set PUBLISH_REPLIES=true and configure the GBP credentials.",
+      );
+    }
+
+    const account = process.env.GBP_ACCOUNT_ID!;
+    const url =
+      `${REVIEWS_API}/accounts/${account}` +
+      `/locations/${input.locationExternalId}` +
+      `/reviews/${input.reviewExternalId}/reply`;
+
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${await this.accessToken()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ comment: input.text }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Google rejected the reply (${res.status}): ${(await res.text()).slice(0, 300)}`,
+      );
+    }
   }
 
   private async get<T>(url: string): Promise<T> {

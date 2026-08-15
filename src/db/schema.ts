@@ -77,8 +77,8 @@ export const locations = pgTable(
     reportedReviewCount: integer("reported_review_count"),
     active: boolean("active").notNull().default(true),
     /**
-     * The same physical shop shows up once per source — as "Linella — Ciocana"
-     * on Google and "Линелла" on Yandex. Pointing one at another makes the
+     * The same physical shop can show up more than once — a duplicate Google
+     * listing, or a row from an older source. Pointing one at another makes the
      * target canonical: its page, its ratings and its zone totals absorb both.
      *
      * Null means this row is canonical (or standalone), which is the default,
@@ -167,6 +167,12 @@ export const replies = pgTable(
     text: text("text").notNull(),
     // True when the final text differs from the suggestion it started as.
     edited: boolean("edited").notNull().default(false),
+    /**
+     * Set once the reply is live on the platform. Null means it was only
+     * copied to the clipboard — the operator may or may not have pasted it,
+     * which is exactly the ambiguity publishing removes.
+     */
+    publishedAt: timestamp("published_at", { withTimezone: true }),
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     // Display name snapshotted at publish time, so the audit trail survives a
     // rename or a deleted account.

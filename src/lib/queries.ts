@@ -105,7 +105,7 @@ export type StoreStats = {
   negativeUnanswered: number;
   /** Counts for 1★…5★, index 0 = one star. */
   histogram: [number, number, number, number, number];
-  /** Other source rows folded into this one, e.g. the Yandex twin. */
+  /** Other listings folded into this one, e.g. a duplicate Google entry. */
   mergedFrom: { id: string; source: string; name: string }[];
 };
 
@@ -127,8 +127,8 @@ export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[
     /*
      * Matched with EXISTS rather than against the joined `member` rows: a WHERE
      * on the join would drop non-matching members and silently lose their
-     * reviews from the totals. This way searching the Yandex name still finds
-     * the store, with the aggregate intact.
+     * reviews from the totals. This way searching a merged listing's name still
+     * finds the store, with the aggregate intact.
      */
     conditions.push(sql`exists (
       select 1 from ${locations} m
@@ -141,7 +141,7 @@ export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[
    * Self-join: every location rolls up to `coalesce(merged_into, id)`, so a
    * canonical row collects its own reviews plus those of anything merged into
    * it. Only canonical rows are returned, which is what stops a store that
-   * exists on both Google and Yandex being listed and counted twice.
+   * has duplicate listings being listed and counted twice.
    */
   const rows = await db
     .select({
@@ -468,6 +468,8 @@ export async function getBacklogStores(limit = 6): Promise<StoreStats[]> {
 
 export type ReviewDetail = {
   id: string;
+  /** Which adapter produced it — decides whether it can be published back. */
+  source: string;
   rating: number;
   text: string | null;
   authorName: string | null;
@@ -515,6 +517,7 @@ export async function getReviewDetail(id: string): Promise<ReviewDetail | null> 
 
   return {
     id: row.review.id,
+    source: row.review.source,
     rating: row.review.rating,
     text: row.review.text,
     authorName: row.review.authorName,

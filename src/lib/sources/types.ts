@@ -32,6 +32,35 @@ export type SourceReview = {
   existingReplyAt?: Date | null;
 };
 
+/**
+ * Publishing is optional and rare: of the platforms here only Google Business
+ * Profile exposes a write API. A source that can't publish simply omits
+ * `postReply`, and the UI falls back to copy-and-paste.
+ */
+export interface ReplyCapableSource extends ReviewSource {
+  /** False when the credentials are present but lack write scope. */
+  canPublish(): boolean;
+  /**
+   * Publish `text` as the owner's public reply. Overwrites any existing reply,
+   * which is how the platform models an edit. Throws on failure — the caller
+   * must not record a reply as published unless this resolves.
+   */
+  postReply(input: {
+    locationExternalId: string;
+    reviewExternalId: string;
+    text: string;
+  }): Promise<void>;
+}
+
+export function canPublish(source: ReviewSource): source is ReplyCapableSource {
+  const candidate = source as Partial<ReplyCapableSource>;
+  return (
+    typeof candidate.postReply === "function" &&
+    typeof candidate.canPublish === "function" &&
+    candidate.canPublish()
+  );
+}
+
 export interface ReviewSource {
   /** Machine name, stored on every row so mixed-source data stays separable. */
   readonly name: string;

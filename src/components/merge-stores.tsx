@@ -15,9 +15,10 @@ export type MergeCandidate = {
 export type MergedMember = { id: string; name: string; source: string };
 
 /**
- * Admin control for folding the same shop's listings together. Auto-matching
- * isn't viable — the same store is "Linella — Ciocana" on Google and "Линелла"
- * on Yandex — so pairing is a deliberate human decision.
+ * Admin control for folding the same shop's listings together — duplicate
+ * Google listings, or rows left behind by a source migration. Auto-matching
+ * isn't viable, because duplicates differ in name and address formatting and a
+ * wrong pairing silently corrupts a store's rating. So it's a human decision.
  */
 export function MergeStores({
   storeId,

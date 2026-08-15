@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { StarRow } from "@/components/rating";
 import {
   generateDraftsAction,
+  publishReplyAction,
   saveReplyAction,
   setReviewStatusAction,
 } from "@/app/actions";
@@ -23,11 +24,13 @@ export function ReplyPanel({
   t,
   locale,
   aiEnabled,
+  publishEnabled,
 }: {
   review: ReviewDetail;
   t: Dict;
   locale: string;
   aiEnabled: boolean;
+  publishEnabled: boolean;
 }) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<Draft[]>(review.suggestions);
@@ -35,7 +38,11 @@ export function ReplyPanel({
   const [text, setText] = useState(review.reply?.text ?? "");
   const [instruction, setInstruction] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Which heading the error sits under — drafting and publishing fail for
+  // completely different reasons and shouldn't share a label.
+  const [errorLabel, setErrorLabel] = useState<string>(t.inbox.genFailed);
   const [copied, setCopied] = useState(false);
+  const [confirmingPublish, setConfirmingPublish] = useState(false);
   const [generating, startGenerating] = useTransition();
   const [saving, startSaving] = useTransition();
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -46,6 +53,7 @@ export function ReplyPanel({
   function generate() {
     startGenerating(async () => {
       setError(null);
+      setErrorLabel(t.inbox.genFailed);
       const result = await generateDraftsAction(review.id, instruction);
       if (!result.ok) {
         setError(result.error);
@@ -110,6 +118,25 @@ export function ReplyPanel({
       if (copiedOk) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1800);
+      }
+      router.refresh();
+    });
+  }
+
+  function publish() {
+    startSaving(async () => {
+      setError(null);
+      const result = await publishReplyAction(
+        review.id,
+        text,
+        selectedDraft?.id ?? null,
+        selectedDraft?.text ?? null,
+      );
+      setConfirmingPublish(false);
+      if (!result.ok) {
+        setErrorLabel(t.inbox.publishFailed);
+        setError(result.error);
+        return;
       }
       router.refresh();
     });
@@ -300,7 +327,7 @@ export function ReplyPanel({
 
         {error ? (
           <p className="mt-4 border-l-2 border-brand bg-brand-soft px-3 py-2 text-sm text-brand">
-            {t.inbox.genFailed}: {error}
+            {errorLabel}: {error}
           </p>
         ) : null}
 
@@ -385,15 +412,61 @@ export function ReplyPanel({
           />
         </label>
 
+        {/* Publishing is irreversible in the sense that matters: it is public
+            the instant it lands. So the confirm step restates the consequence
+            and shows the exact text, rather than asking "are you sure?". */}
+        {confirmingPublish ? (
+          <div className="mt-3 border-l-2 border-brand bg-brand-soft px-4 py-3">
+            <p className="text-sm font-semibold">{t.inbox.confirmTitle}</p>
+            <p className="mt-1 text-xs text-ink-soft">{t.inbox.confirmBody}</p>
+            <blockquote className="mt-3 border-l-2 border-ink/20 bg-surface py-2 pl-3 pr-2 font-serif text-[14px] leading-[1.5]">
+              {text}
+            </blockquote>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={publish}
+                disabled={saving}
+                className="rounded-[2px] bg-brand px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
+              >
+                {saving ? t.inbox.publishing : t.inbox.confirmGo}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingPublish(false)}
+                disabled={saving}
+                className="rounded-[2px] border border-rule bg-surface px-3 py-2 text-sm transition-colors hover:bg-rule-soft"
+              >
+                {t.inbox.confirmCancel}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          {publishEnabled ? (
+            <button
+              type="button"
+              onClick={() => setConfirmingPublish(true)}
+              disabled={saving || !text.trim() || confirmingPublish}
+              className="rounded-[2px] bg-brand px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-40"
+            >
+              {t.inbox.publish}
+            </button>
+          ) : null}
+
           <button
             type="button"
             onClick={copyAndSave}
             disabled={saving || !text.trim()}
-            className="inline-flex items-center gap-2 rounded-[2px] bg-ink px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-40"
+            className={`inline-flex items-center gap-2 rounded-[2px] px-3.5 py-2 text-sm font-medium transition-opacity hover:opacity-85 disabled:opacity-40 ${
+              publishEnabled
+                ? "border border-rule bg-surface text-ink"
+                : "bg-ink text-white"
+            }`}
           >
             {copied ? t.inbox.copied : t.inbox.copyReply}
-            <kbd className="kbd kbd-invert">Ctrl ⏎</kbd>
+            <kbd className={`kbd ${publishEnabled ? "" : "kbd-invert"}`}>Ctrl ⏎</kbd>
           </button>
           <button
             type="button"

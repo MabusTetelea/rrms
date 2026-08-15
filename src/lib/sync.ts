@@ -18,7 +18,7 @@ export type SyncResult = {
  * Runs every source named in REVIEW_SOURCE, one after another.
  *
  * Each source gets its own sync_runs row, and one failing source does not stop
- * the others — a Yandex scraper outage shouldn't block the Google sync.
+ * the others — one provider's outage shouldn't block the rest.
  */
 export async function runSync(
   options: { full?: boolean } = {},

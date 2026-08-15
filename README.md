@@ -5,10 +5,10 @@ reviews in, ranks the stores by what customers actually say, drafts three reply
 options with an LLM through OpenRouter, and hands the operator a reply to copy
 into Google Business Profile.
 
-**The app never posts to Google.** Copying is the terminal action; publishing
-stays a human step in Google's own interface. That means no write access, no
-API approval process, and no chance of the model publishing something nobody
-read.
+**Nothing is ever published without a human.** By default the app only drafts
+and copies. Publishing straight to Google can be switched on (see below), and
+even then it takes an explicit click plus a confirmation per reply — the model
+never publishes on its own.
 
 ---
 
@@ -118,11 +118,11 @@ made-up phone numbers or links, and a sentence cap.
 ## Review sources
 
 `REVIEW_SOURCE` is a **comma-separated list** — every source named there runs on
-each sync, because Google and Yandex are different audiences rather than
-alternatives:
+each sync. All of them read Google; the list exists so a migration (scraper →
+official API) can run both for a while:
 
 ```
-REVIEW_SOURCE=gbp,yandex
+REVIEW_SOURCE=gbp
 ```
 
 All adapters implement the same interface in `src/lib/sources/types.ts`, so the
@@ -135,42 +135,65 @@ rest of the app doesn't know which ones are live. Each source gets its own
 | `gbp` | Google | OAuth refresh token + Google approval | Free, but only if the account manages the Linella listings. |
 | `outscraper` | Google | `OUTSCRAPER_API_KEY` | Paid. Discovers stores by Maps search, or pin them with `OUTSCRAPER_PLACE_IDS`. |
 | `serpapi` | Google | `SERPAPI_API_KEY` | Paid, paginated. Better for keeping up than backfilling. |
-| `yandex` | Yandex Maps | `APIFY_TOKEN` + `YANDEX_START_URLS` | See below. |
 
 **`mock` is the tested path.** The live adapters are written against each
 provider's documented response shape but have not been run against a real key —
 expect to adjust field names on first contact.
 
-### About the Yandex adapter
+## Publishing replies to Google
 
-**Yandex publishes no reviews API.** Yandex Business shows reviews to a verified
-owner in its own dashboard and offers an embeddable widget, but there is no
-public read endpoint. So this adapter goes through Apify's maintained scraper
-actor (`zen-studio/yandex-maps-reviews-scraper`, ~$2.99 per 1000 reviews), which
-does return review IDs, ratings, dates, author names and owner replies.
+Off by default. With `PUBLISH_REPLIES=false` the app only drafts and copies —
+the safe posture while you're still reading what the model writes.
 
-One actor run covers every configured business and both interface methods are
-served from that single result — running the scraper per store would mean one
-paid run per location.
+Turning it on requires all three:
 
-### The same store on two platforms
+```
+REVIEW_SOURCE=gbp          # only Google Business Profile can write
+GBP_CLIENT_ID=...          # plus secret, refresh token, account id
+PUBLISH_REPLIES=true
+```
 
-Locations are keyed on `(source, external_id)`, so one shop fetched from both
-Google and Yandex arrives as two rows. An admin folds them together from the
-store's page: **Listings → pick the other listing → Merge in**.
+A **Publish to Google** button then appears next to Copy. It is never
+automatic: one explicit click, then a confirmation showing the exact text that
+is about to go public, then the request. The reply lands as the owner's public
+response under the review.
+
+Three deliberate properties:
+
+- **Google is called before the database is written.** If Google rejects the
+  reply, nothing is recorded — the review stays unanswered. The reverse order
+  would mark a review answered while nothing is public, which is the one wrong
+  state an operator cannot detect from inside the app.
+- **The button only shows for reviews that came from `gbp`.** A review pulled
+  by a scraper has no id Google would accept, and the action refuses it by name
+  rather than failing obscurely.
+- **`replies.published_at` separates the two paths.** Null means copied to the
+  clipboard and possibly never pasted; set means confirmed live on Google.
+
+Google only accepts replies for locations that are **verified** in Business
+Profile. An unverified location returns 403 with that reason.
+
+Yandex has no write API of any kind — if you add it back, replies there are
+manual forever.
+
+### The same store listed twice
+
+Locations are keyed on `(source, external_id)`, so a shop that exists as two
+Google listings — or arrives from two sources during a migration — becomes two
+rows. An admin folds them together from the store's page: **Listings → pick the
+other listing → Merge in**.
 
 Merging points one row's `merged_into` at the other. The target becomes
 canonical and absorbs everything: ratings, star spread, backlog, trend, and the
 inbox when filtered by that store. The merged row disappears from the stores
 list, so nothing is counted twice. **Separate** reverses it.
 
-Auto-matching is deliberately not attempted — the same shop is "Linella —
-Ciocana" on Google and "Линелла" on Yandex, with addresses in different
-languages and no coordinates from the Yandex scraper. Guessing wrong here
-silently corrupts every rating on the dashboard, so pairing is a human decision.
+Auto-matching is deliberately not attempted — duplicate listings differ in name
+and address formatting, and guessing wrong silently corrupts every rating on the
+dashboard. Pairing is a human decision.
 
-Searching the stores list still matches on a merged listing's name, so typing
-the Russian name finds the store it belongs to.
+Searching the stores list still matches on a merged listing's name, so either
+spelling finds the store it belongs to.
 
 Merging is one level deep: you cannot merge into a store that is itself merged
 into another. Anything already attached to a row follows it when that row is

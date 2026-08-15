@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { locations, replies, reviews } from "@/db/schema";
+import { getPublishingSource } from "@/lib/sources";
 import { generateSuggestions } from "@/lib/ai/suggest";
 import { isOpenRouterConfigured } from "@/lib/ai/openrouter";
 import { currentUserOrNull, type SessionUser } from "@/lib/auth/session";
@@ -116,6 +117,98 @@ export async function saveReplyAction(
     revalidatePath("/inbox");
     revalidatePath("/");
     return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export type PublishResult =
+  | { ok: true; publishedAt: string }
+  | { ok: false; error: string };
+
+/**
+ * Publish a reply to the platform, then record it.
+ *
+ * Ordering matters and is deliberate: Google is called first and the database
+ * is only written if it succeeds. The reverse order would let a failed publish
+ * leave a review marked as answered when nothing is public — the one wrong
+ * state an operator can't detect from inside the app.
+ *
+ * This is never automatic. The UI requires an explicit click and a
+ * confirmation, and this action re-checks that publishing is switched on.
+ */
+export async function publishReplyAction(
+  reviewId: string,
+  text: string,
+  suggestionId?: string | null,
+  originalSuggestionText?: string | null,
+): Promise<PublishResult> {
+  const user = await requireOperator();
+  if (!user) return DENIED;
+
+  const trimmed = text.trim();
+  if (!trimmed) return { ok: false, error: "Empty reply." };
+
+  const source = getPublishingSource();
+  if (!source) {
+    return {
+      ok: false,
+      error:
+        "Publishing is off. It needs REVIEW_SOURCE to include gbp, the Google credentials set, and PUBLISH_REPLIES=true.",
+    };
+  }
+
+  try {
+    const [row] = await db
+      .select({ review: reviews, location: locations })
+      .from(reviews)
+      .innerJoin(locations, eq(reviews.locationId, locations.id))
+      .where(eq(reviews.id, reviewId));
+
+    if (!row) return { ok: false, error: "Review not found." };
+
+    // A review pulled from a different source has no id Google would accept.
+    if (row.review.source !== source.name) {
+      return {
+        ok: false,
+        error: `This review came from "${row.review.source}", which cannot publish. Copy it across by hand.`,
+      };
+    }
+
+    await source.postReply({
+      locationExternalId: row.location.externalId,
+      reviewExternalId: row.review.externalId,
+      text: trimmed,
+    });
+
+    const publishedAt = new Date();
+
+    await db.insert(replies).values({
+      reviewId,
+      suggestionId: suggestionId || null,
+      text: trimmed,
+      edited: Boolean(
+        originalSuggestionText && originalSuggestionText.trim() !== trimmed,
+      ),
+      userId: user.id,
+      operator: user.name,
+      publishedAt,
+    });
+
+    // Mirror what is now public, so the UI shows it without waiting for a sync.
+    await db
+      .update(reviews)
+      .set({
+        status: "replied",
+        existingReplyText: trimmed,
+        existingReplyAt: publishedAt,
+        updatedAt: publishedAt,
+      })
+      .where(eq(reviews.id, reviewId));
+
+    revalidatePath("/inbox");
+    revalidatePath("/");
+    return { ok: true, publishedAt: publishedAt.toISOString() };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }

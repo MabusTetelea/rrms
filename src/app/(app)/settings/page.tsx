@@ -10,7 +10,7 @@ import { getDict } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale-server";
 import { getRecentSyncs } from "@/lib/queries";
 import { getBrandVoice } from "@/lib/settings";
-import { getReviewSources, SOURCE_NAMES } from "@/lib/sources";
+import { getPublishingSource, getReviewSources, SOURCE_NAMES } from "@/lib/sources";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +42,7 @@ export default async function SettingsPage() {
     hint: source.configHint,
   }));
   const aiReady = isOpenRouterConfigured();
+  const publisher = getPublishingSource();
 
   const dateFormat = new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
@@ -159,7 +160,7 @@ export default async function SettingsPage() {
             <h2 className="text-[15px] font-semibold">{t.settings.sourceTitle}</h2>
             <p className="mt-0.5 text-xs text-ink-faint">{t.settings.sourceHint}</p>
             <dl className="mt-3 border-t border-rule">
-              {/* REVIEW_SOURCE is a list — Google and Yandex run side by side. */}
+              {/* REVIEW_SOURCE is a list, so more than one can be live. */}
               {sources.map((source) => (
                 <Row key={source.name} label={source.name}>
                   <StatusPill
@@ -169,6 +170,13 @@ export default async function SettingsPage() {
                   />
                 </Row>
               ))}
+              <Row label={t.settings.publishing}>
+                <StatusPill
+                  ok={Boolean(publisher)}
+                  okLabel={publisher ? publisher.name : t.settings.configured}
+                  offLabel={t.settings.publishingOff}
+                />
+              </Row>
               <Row label={t.settings.sourceAvailable}>
                 <span className="font-mono text-[11px] text-ink-faint">
                   {SOURCE_NAMES.join(" · ")}
