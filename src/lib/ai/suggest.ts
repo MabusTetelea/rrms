@@ -172,6 +172,32 @@ export async function generateSuggestions(
     throw new Error("The model returned no usable reply options.");
   }
 
+  /*
+   * Enforce the reply language instead of trusting the prompt to hold.
+   * "Answer in the customer's language" is rule #1 in the system prompt, but a
+   * weaker model can still drift — usually into English — and a reply in the
+   * wrong language is worse than no reply, because it publishes under the
+   * brand and can't be unsent.
+   *
+   * Rejection needs positive evidence: a draft is dropped only when detection
+   * is confident AND disagrees. "other" (short text, no strong signal) is
+   * inconclusive and kept, so a correct-but-terse reply is never discarded.
+   */
+  const wrongLanguage: string[] = [];
+  for (const [tone, text] of [...byTone.entries()]) {
+    const detected = detectLanguage(text);
+    if (detected !== "other" && detected !== effectiveLanguage) {
+      wrongLanguage.push(`${tone} (${detected})`);
+      byTone.delete(tone);
+    }
+  }
+
+  if (byTone.size === 0) {
+    throw new Error(
+      `Every draft came back in the wrong language — expected ${effectiveLanguage.toUpperCase()}, got ${wrongLanguage.join(", ")}. Try again, or switch model.`,
+    );
+  }
+
   const rows = [...byTone.entries()].map(([tone, text]) => ({
     reviewId,
     generationId,

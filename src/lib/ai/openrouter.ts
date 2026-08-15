@@ -27,6 +27,29 @@ export function activeModel() {
   return process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
 }
 
+/**
+ * Free-only mode is the default. Set OPENROUTER_ALLOW_PAID=true to spend money
+ * deliberately; anything else keeps the app pinned to zero-cost models.
+ */
+export function isFreeOnly() {
+  return process.env.OPENROUTER_ALLOW_PAID !== "true";
+}
+
+/** A ":free" suffix is OpenRouter's guarantee that a variant costs nothing. */
+export function isFreeModel(model: string) {
+  return model.trim().endsWith(":free");
+}
+
+export class PaidModelBlockedError extends Error {
+  constructor(model: string) {
+    super(
+      `Refusing to call "${model}": it is not a free model and free-only mode is on. ` +
+        `Use a model whose slug ends in ":free", or set OPENROUTER_ALLOW_PAID=true.`,
+    );
+    this.name = "PaidModelBlockedError";
+  }
+}
+
 type ChatMessage = { role: "system" | "user"; content: string };
 
 export async function chatJson<T>(
@@ -37,6 +60,10 @@ export async function chatJson<T>(
   if (!apiKey) throw new OpenRouterNotConfiguredError();
 
   const model = activeModel();
+
+  // Fail before the network call, not after a charge.
+  const freeOnly = isFreeOnly();
+  if (freeOnly && !isFreeModel(model)) throw new PaidModelBlockedError(model);
 
   /*
    * Optional parameters are not universally supported, and the two failure
