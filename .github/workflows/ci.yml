@@ -25,6 +25,13 @@ jobs:
       # platform it's on. Contributors on macOS would hit the same wall.
       - run: npm install --no-audit --no-fund
 
+      # Next generates route types (LayoutProps, PageProps) into .next/types,
+      # which tsconfig includes. Locally they exist because the dev server has
+      # been run; a fresh checkout has never built anything, so tsc fails on
+      # names it cannot find. typegen produces them without a full build.
+      - name: Generate route types
+        run: npx next typegen
+
       - name: Types
         run: npx tsc --noEmit
 
