@@ -5,90 +5,53 @@ import { resolveZone } from "./zones";
 /*
  * Zones drive the "start here" line on the overview, so a store filed in the
  * wrong area quietly sends the operator to the wrong place. Nothing is entered
- * by hand — it is all derived from the city and street on every sync.
+ * by hand — it is all derived from the city, name and address on every sync.
  */
 
-test("files a Chișinău store by its sector keyword", () => {
+test("files a store by its city", () => {
+  assert.equal(resolveZone({ name: "Northgate", city: "North District" }), "north");
+  assert.equal(resolveZone({ name: "Southbank", city: "South District" }), "south");
+  assert.equal(resolveZone({ name: "Eastfield", city: "East District" }), "east");
+  assert.equal(resolveZone({ name: "Westport", city: "West District" }), "west");
   assert.equal(
-    resolveZone({
-      name: "Market — Botanica",
-      city: "Chișinău",
-      address: "bd. Dacia 32, Chișinău",
-    }),
-    "chisinau-botanica",
+    resolveZone({ name: "Central High Street", city: "Central District" }),
+    "central",
   );
 });
 
-test("matches the street when the name says nothing about the sector", () => {
+test("matches the name or address when the city says nothing useful", () => {
   assert.equal(
-    resolveZone({ name: "Market", city: "Chișinău", address: "str. Kiev 7" }),
-    "chisinau-riscani",
+    resolveZone({ name: "Riverside", city: "Springfield", address: "8 North Parade" }),
+    "north",
   );
+  assert.equal(resolveZone({ name: "Westport Retail Park", city: "" }), "west");
 });
 
-test("ignores diacritics", () => {
-  assert.equal(
-    resolveZone({ name: "Market — Chișinău Ciocana", city: "Chisinau" }),
-    "chisinau-ciocana",
-  );
-});
-
-test("matches Râșcani by name, in either spelling", () => {
+test("the outer ring wins over a compass word", () => {
   /*
-   * Regression guard. Stripping the accent from â gives "rascani", not
-   * "riscani" — they are different letters — so a store named only "Râșcani",
-   * with no other sector hint in its address, used to be filed under Centru.
+   * A suburban store whose address happens to mention a direction belongs in
+   * the outer ring, not the inner area — otherwise the outskirts get silently
+   * folded into whichever compass word appeared first.
    */
-  for (const name of ["Market — Râșcani", "Market — Riscani", "Market Rascani"]) {
-    assert.equal(
-      resolveZone({ name, city: "Chișinău", address: null }),
-      "chisinau-riscani",
-      name,
-    );
-  }
-});
-
-test("falls back to Centru for an unrecognised Chișinău address", () => {
   assert.equal(
-    resolveZone({ name: "Market", city: "Chișinău", address: "str. Necunoscută 1" }),
-    "chisinau-centru",
+    resolveZone({ name: "Stonebridge", city: "Suburbs", address: "40 North Bridge Road" }),
+    "suburbs",
   );
+  assert.equal(resolveZone({ name: "Lakeside", city: "Outskirts" }), "suburbs");
 });
 
-test("treats suburbs inside the municipality as the city", () => {
-  assert.equal(
-    resolveZone({ name: "Market — Durlești", city: "Durlești", address: "str. Cartușa 4" }),
-    "chisinau-buiucani",
-  );
+test("both spellings of centre work", () => {
+  assert.equal(resolveZone({ name: "Shop", city: "City Centre" }), "central");
+  assert.equal(resolveZone({ name: "Shop", city: "City Center" }), "central");
+  assert.equal(resolveZone({ name: "Shop", city: "Downtown" }), "central");
 });
 
-test("buckets towns outside the capital into regions", () => {
-  assert.equal(resolveZone({ name: "Market — Bălți", city: "Bălți" }), "nord");
-  assert.equal(resolveZone({ name: "Market — Cahul", city: "Cahul" }), "sud");
-  assert.equal(resolveZone({ name: "Market — Orhei", city: "Orhei" }), "raioane-centru");
+test("ignores accents", () => {
+  // "Chișinău Centre" should behave exactly like "Chisinau Centre".
+  assert.equal(resolveZone({ name: "Shop", city: "Chișinău Centre" }), "central");
 });
 
-test("a Bălți street that shares a Chișinău keyword still lands in the north", () => {
-  // "Independenței" is a Botanica keyword; the city has to win.
-  assert.equal(
-    resolveZone({
-      name: "Market — Bălți",
-      city: "Bălți",
-      address: "str. Independenței 20, Bălți",
-    }),
-    "nord",
-  );
-});
-
-test("Ștefan Vodă is mapped", () => {
-  // Regression guard: the lookup key was written with an underscore, which the
-  // normaliser can never produce, so this town silently fell to "unassigned".
-  assert.equal(
-    resolveZone({ name: "Market — Ștefan Vodă", city: "Ștefan Vodă" }),
-    "sud",
-  );
-});
-
-test("an unmapped town is flagged, not guessed", () => {
-  assert.equal(resolveZone({ name: "Market", city: "Springfield" }), "unassigned");
+test("an unmatched store is flagged, not guessed", () => {
+  assert.equal(resolveZone({ name: "Shop", city: "Springfield" }), "unassigned");
+  assert.equal(resolveZone({ name: "Shop" }), "unassigned");
 });

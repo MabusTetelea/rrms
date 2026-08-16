@@ -14,6 +14,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "demo:clear": "tsx --env-file=.env.local scripts/clear-demo.ts",
     "user": "tsx --env-file=.env.local scripts/user.ts",
     "sync": "tsx --env-file=.env.local scripts/seed.ts"
   },

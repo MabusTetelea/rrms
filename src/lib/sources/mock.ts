@@ -1,4 +1,5 @@
 import {
+  MOCK_AUTHORS_EN,
   MOCK_AUTHORS_RO,
   MOCK_AUTHORS_RU,
   MOCK_LOCATIONS,
@@ -43,19 +44,19 @@ function pick<T>(r: () => number, xs: T[]): T {
  * the whole point of the per-location leaderboard, so the demo data reflects it.
  */
 const QUALITY_PROFILES: Record<string, [number, number, number, number, number]> = {
-  //                             1★   2★   3★   4★   5★
-  "mock-ciocana": /*  weak  */ [18, 16, 20, 24, 22],
-  "mock-botanica": /* strong*/ [4, 6, 12, 30, 48],
-  "mock-riscani": [8, 10, 18, 30, 34],
-  "mock-buiucani": [6, 8, 16, 32, 38],
-  "mock-centru": /*  busy  */ [14, 14, 22, 26, 24],
-  "mock-telecentru": [7, 9, 17, 31, 36],
-  "mock-durlesti": [5, 7, 15, 31, 42],
-  "mock-balti": [10, 11, 19, 29, 31],
-  "mock-orhei": [6, 8, 18, 30, 38],
-  "mock-cahul": /*  worst */ [22, 18, 21, 21, 18],
-  "mock-ungheni": [7, 10, 20, 30, 33],
-  "mock-ialoveni": [4, 6, 14, 32, 44],
+  //                                     1★   2★   3★   4★   5★
+  "shop-central-high": /*  busy   */ [14, 14, 22, 26, 24],
+  "shop-riverside": [7, 9, 17, 31, 36],
+  "shop-northgate": [8, 10, 18, 30, 34],
+  "shop-hilltop": /*   strong */ [4, 6, 12, 30, 48],
+  "shop-southbank": /* weak   */ [18, 16, 20, 24, 22],
+  "shop-parkside": [6, 8, 16, 32, 38],
+  "shop-eastfield": [7, 10, 20, 30, 33],
+  "shop-oakwood": [6, 8, 18, 30, 38],
+  "shop-westport": /*  worst  */ [22, 18, 21, 21, 18],
+  "shop-meadowbrook": [5, 7, 15, 31, 42],
+  "shop-stonebridge": [10, 11, 19, 29, 31],
+  "shop-lakeside": [4, 6, 14, 32, 44],
 };
 
 const DEFAULT_PROFILE: [number, number, number, number, number] = [8, 10, 18, 30, 34];
@@ -84,10 +85,17 @@ function generateForLocation(location: SourceLocation): SourceReview[] {
   const reviews: SourceReview[] = [];
   for (let i = 0; i < count; i++) {
     const rating = weightedRating(r, weights);
-    // Roughly 55/45 Romanian/Russian, which is close to the real split in MD.
-    const lang: "ro" | "ru" = r() < 0.55 ? "ro" : "ru";
+
+    /*
+     * Mostly English, with a fifth split between Romanian and Russian. Replies
+     * always follow the language the customer wrote in, and an all-English
+     * dataset can't show that working.
+     */
+    const draw = r();
+    const lang: "en" | "ro" | "ru" = draw < 0.8 ? "en" : draw < 0.9 ? "ro" : "ru";
     const texts = MOCK_REVIEW_TEXTS[rating][lang];
-    const authors = lang === "ro" ? MOCK_AUTHORS_RO : MOCK_AUTHORS_RU;
+    const authors =
+      lang === "en" ? MOCK_AUTHORS_EN : lang === "ro" ? MOCK_AUTHORS_RO : MOCK_AUTHORS_RU;
 
     // Spread over the last ~180 days, denser toward the present.
     const ageDays = Math.floor(Math.pow(r(), 1.7) * 180);
@@ -107,10 +115,13 @@ function generateForLocation(location: SourceLocation): SourceReview[] {
       rating,
       text: hasText ? pick(r, texts) : null,
       publishedAt,
+      // Answered in the language the customer used, like a real owner reply.
       existingReplyText: alreadyReplied
-        ? lang === "ro"
-          ? "Vă mulțumim pentru feedback! L-am transmis echipei magazinului."
-          : "Спасибо за отзыв! Мы передали его команде магазина."
+        ? lang === "en"
+          ? "Thank you for the feedback. We've passed it on to the store team."
+          : lang === "ro"
+            ? "Vă mulțumim pentru feedback! L-am transmis echipei magazinului."
+            : "Спасибо за отзыв! Мы передали его команде магазина."
         : null,
       existingReplyAt: alreadyReplied
         ? new Date(publishedAt.getTime() + 2 * DAY_MS)

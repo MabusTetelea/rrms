@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { locations, reviews, suggestions } from "@/db/schema";
 import { chatJson } from "./openrouter";
 import { companyDescription, companyLabel } from "@/lib/company";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 import { getBrandVoice, type BrandVoice } from "@/lib/settings";
 import { detectLanguage } from "@/lib/text";
 
@@ -135,10 +136,15 @@ export async function generateSuggestions(
   if (!row) throw new Error(`Review ${reviewId} not found`);
 
   const voice = await getBrandVoice();
-  // Fall back to Romanian for textless reviews: it's the majority language and
-  // the reply will be generic anyway.
-  const language = row.review.language ?? detectLanguage(row.review.text) ?? "ro";
-  const effectiveLanguage = language === "other" ? "ro" : language;
+
+  /*
+   * A review with no text, or too little to judge, has no language of its own.
+   * Fall back to the app's default rather than a hardcoded one — the reply is
+   * generic anyway, and hardcoding meant a deployment that had switched its
+   * default still got replies in someone else's language.
+   */
+  const language = row.review.language ?? detectLanguage(row.review.text);
+  const effectiveLanguage = language === "other" ? DEFAULT_LOCALE : language;
 
   const { data, model } = await chatJson<ModelResponse>([
     { role: "system", content: systemPrompt(voice) },

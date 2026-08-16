@@ -13,9 +13,9 @@ import type { ZoneId, ZoneRegion } from "@/lib/zones";
  * the team. This is separate from the review's own language — the AI always
  * replies in whatever the customer wrote.
  */
-export const LOCALES = ["ro", "ru", "en"] as const;
+export const LOCALES = ["en", "ro", "ru"] as const;
 export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = "ro";
+export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "operator_locale";
 
 export const LOCALE_LABELS: Record<Locale, string> = {
@@ -295,20 +295,18 @@ const en = {
   } satisfies Record<Topic, string>,
 
   zones: {
-    "chisinau-centru": "Chișinău — Centru",
-    "chisinau-botanica": "Chișinău — Botanica",
-    "chisinau-ciocana": "Chișinău — Ciocana",
-    "chisinau-riscani": "Chișinău — Râșcani",
-    "chisinau-buiucani": "Chișinău — Buiucani",
-    nord: "North",
-    "raioane-centru": "Centre (districts)",
-    sud: "South",
+    central: "Central",
+    north: "North",
+    south: "South",
+    east: "East",
+    west: "West",
+    suburbs: "Suburbs",
     unassigned: "Unassigned",
   } satisfies Record<ZoneId, string>,
 
   zoneRegions: {
-    chisinau: "Chișinău",
-    regions: "Regions",
+    inner: "Main areas",
+    outer: "Outer",
     other: "Other",
   } satisfies Record<ZoneRegion, string>,
 
@@ -593,20 +591,18 @@ const ro: Dict = {
   },
 
   zones: {
-    "chisinau-centru": "Chișinău — Centru",
-    "chisinau-botanica": "Chișinău — Botanica",
-    "chisinau-ciocana": "Chișinău — Ciocana",
-    "chisinau-riscani": "Chișinău — Râșcani",
-    "chisinau-buiucani": "Chișinău — Buiucani",
-    nord: "Nord",
-    "raioane-centru": "Centru (raioane)",
-    sud: "Sud",
+    central: "Centru",
+    north: "Nord",
+    south: "Sud",
+    east: "Est",
+    west: "Vest",
+    suburbs: "Suburbii",
     unassigned: "Nealocat",
   },
 
   zoneRegions: {
-    chisinau: "Chișinău",
-    regions: "Regiuni",
+    inner: "Zone principale",
+    outer: "Periferie",
     other: "Altele",
   },
 
@@ -887,20 +883,18 @@ const ru: Dict = {
   },
 
   zones: {
-    "chisinau-centru": "Кишинёв — Центр",
-    "chisinau-botanica": "Кишинёв — Ботаника",
-    "chisinau-ciocana": "Кишинёв — Чеканы",
-    "chisinau-riscani": "Кишинёв — Рышкановка",
-    "chisinau-buiucani": "Кишинёв — Буюканы",
-    nord: "Север",
-    "raioane-centru": "Центр (районы)",
-    sud: "Юг",
-    unassigned: "Не назначено",
+    central: "Центр",
+    north: "Север",
+    south: "Юг",
+    east: "Восток",
+    west: "Запад",
+    suburbs: "Пригород",
+    unassigned: "Без зоны",
   },
 
   zoneRegions: {
-    chisinau: "Кишинёв",
-    regions: "Регионы",
+    inner: "Основные районы",
+    outer: "Пригород",
     other: "Прочее",
   },
 

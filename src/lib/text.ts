@@ -13,13 +13,22 @@ const RO_DIACRITICS = /[ăâîșşțţĂÂÎȘŞȚŢ]/;
 // Short, high-frequency words that rarely collide across these three languages.
 const RO_WORDS =
   /\b(și|este|foarte|magazin|produse|preț|preturi|personal|casa|casă|mereu|bun|buna|bună|nu|dar|am|la|de|cu|pentru|acest|acesta)\b/gi;
+/*
+ * Deliberately excludes "are": it is also the Romanian for "has", and it is
+ * common enough in both to swing a short review the wrong way. Everything here
+ * was checked against Romanian for the same reason.
+ */
 const EN_WORDS =
-  /\b(the|and|is|very|store|shop|staff|price|prices|good|bad|always|never|but|with|for|this)\b/gi;
+  /\b(the|and|is|very|store|shop|staff|price|prices|good|bad|always|never|but|with|for|this|it|its|i|my|me|you|they|was|were|have|has|had|would|will|like|need|more|than|some|all|not|open|late|time|here|there|when|what|everything|excellent|great|nice|best|worst|help|find|been|only)\b/gi;
 
 /**
  * Script first (Cyrillic is unambiguous here), then a stopword count between
- * Romanian and English. Moldovan reviews are overwhelmingly ro/ru, so a wrong
- * guess mostly means falling back to "other" and letting the model decide.
+ * Romanian and English.
+ *
+ * "other" means genuinely inconclusive — no script signal and no stopword from
+ * either list — and the caller decides what to do with that. It is not a
+ * synonym for "not one of our languages", so the lists need to be wide enough
+ * that an ordinary sentence lands somewhere.
  */
 export function detectLanguage(text?: string | null): Lang {
   if (!text) return "other";

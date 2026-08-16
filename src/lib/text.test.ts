@@ -28,6 +28,28 @@ test("detects English", () => {
   assert.equal(detectLanguage("The staff is very good and the store is clean"), "en");
 });
 
+test("ordinary English sentences without obvious keywords still read as English", () => {
+  /*
+   * Regression guard. The English list was once short enough that perfectly
+   * normal sentences scored zero and fell to "other" — which the drafting code
+   * treats as "no language", replying in the default instead of English.
+   */
+  assert.equal(
+    detectLanguage("Excellent hours, open late. It has rescued my evening plenty of times."),
+    "en",
+  );
+  assert.equal(
+    detectLanguage("I find almost everything I need. Would like a wider gluten free selection."),
+    "en",
+  );
+});
+
+test("Romanian still wins over English on a Romanian sentence", () => {
+  // The wider English list must not start stealing Romanian reviews.
+  assert.equal(detectLanguage("Magazin bun si personal amabil, preturi corecte"), "ro");
+  assert.equal(detectLanguage("Produse proaspete si preturi bune la acest magazin"), "ro");
+});
+
 test("gives up rather than guessing", () => {
   // Nothing to go on: no script, no stopwords. "other" lets the caller fall
   // back instead of confidently picking the wrong language.

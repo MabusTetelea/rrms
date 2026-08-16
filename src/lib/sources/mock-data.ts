@@ -1,225 +1,133 @@
 import type { SourceLocation } from "./types";
 
 /**
- * Demo dataset used by the `mock` source so the app is fully usable before any
- * paid API key exists. Store addresses are plausible Chișinău/regional
- * locations, not scraped data — replace with the real place IDs when you
- * switch REVIEW_SOURCE to a live provider.
+ * Demo dataset for the `mock` source, so the app is fully usable before any API
+ * key exists. Invented — no real business, no real person, no scraped text.
+ *
+ * Stores are named after their area alone; the configured COMPANY_NAME is
+ * prefixed at runtime (see mock.ts), which keeps this fixture brand-neutral.
+ * Names are deliberately distinct in their first three letters, because the UI
+ * abbreviates each store to a three-letter code.
  */
 
 export const MOCK_LOCATIONS: SourceLocation[] = [
-  {
-    externalId: "mock-ciocana",
-    name: "Ciocana",
-    address: "bd. Mircea cel Bătrân 9, Chișinău",
-    city: "Chișinău",
-    lat: 47.0512,
-    lng: 28.8935,
-  },
-  {
-    externalId: "mock-botanica",
-    name: "Botanica",
-    address: "bd. Dacia 32, Chișinău",
-    city: "Chișinău",
-    lat: 46.9846,
-    lng: 28.8672,
-  },
-  {
-    externalId: "mock-riscani",
-    name: "Râșcani",
-    address: "str. Kiev 7, Chișinău",
-    city: "Chișinău",
-    lat: 47.0489,
-    lng: 28.8514,
-  },
-  {
-    externalId: "mock-buiucani",
-    name: "Buiucani",
-    address: "str. Alba Iulia 75, Chișinău",
-    city: "Chișinău",
-    lat: 47.0301,
-    lng: 28.7862,
-  },
-  {
-    externalId: "mock-centru",
-    name: "Centru",
-    address: "bd. Ștefan cel Mare 128, Chișinău",
-    city: "Chișinău",
-    lat: 47.0246,
-    lng: 28.8324,
-  },
-  {
-    externalId: "mock-telecentru",
-    name: "Telecentru",
-    address: "str. Sihastrului 15, Chișinău",
-    city: "Chișinău",
-    lat: 47.0021,
-    lng: 28.8083,
-  },
-  {
-    externalId: "mock-durlesti",
-    name: "Durlești",
-    address: "str. Cartușa 4, Durlești",
-    city: "Durlești",
-    lat: 47.0234,
-    lng: 28.7524,
-  },
-  {
-    externalId: "mock-balti",
-    name: "Bălți",
-    address: "str. Independenței 20, Bălți",
-    city: "Bălți",
-    lat: 47.7615,
-    lng: 27.9291,
-  },
-  {
-    externalId: "mock-orhei",
-    name: "Orhei",
-    address: "str. Vasile Lupu 36, Orhei",
-    city: "Orhei",
-    lat: 47.3831,
-    lng: 28.8231,
-  },
-  {
-    externalId: "mock-cahul",
-    name: "Cahul",
-    address: "str. Ștefan cel Mare 4, Cahul",
-    city: "Cahul",
-    lat: 45.9075,
-    lng: 28.1944,
-  },
-  {
-    externalId: "mock-ungheni",
-    name: "Ungheni",
-    address: "str. Națională 15, Ungheni",
-    city: "Ungheni",
-    lat: 47.2089,
-    lng: 27.8006,
-  },
-  {
-    externalId: "mock-ialoveni",
-    name: "Ialoveni",
-    address: "str. Alexandru cel Bun 41, Ialoveni",
-    city: "Ialoveni",
-    lat: 46.9412,
-    lng: 28.7778,
-  },
+  { externalId: "shop-central-high", name: "Central High Street", city: "Central District", address: "12 High Street" },
+  { externalId: "shop-riverside", name: "Riverside", city: "Central District", address: "4 River Lane" },
+  { externalId: "shop-northgate", name: "Northgate", city: "North District", address: "88 Northgate Road" },
+  { externalId: "shop-hilltop", name: "Hilltop", city: "North District", address: "3 Hill Rise" },
+  { externalId: "shop-southbank", name: "Southbank", city: "South District", address: "21 Bank Road" },
+  { externalId: "shop-parkside", name: "Parkside", city: "South District", address: "9 Park Avenue" },
+  { externalId: "shop-eastfield", name: "Eastfield", city: "East District", address: "55 Field Road" },
+  { externalId: "shop-oakwood", name: "Oakwood", city: "East District", address: "2 Oak Street" },
+  { externalId: "shop-westport", name: "Westport", city: "West District", address: "30 Harbour Way" },
+  { externalId: "shop-meadowbrook", name: "Meadowbrook", city: "West District", address: "17 Brook Lane" },
+  { externalId: "shop-stonebridge", name: "Stonebridge", city: "Suburbs", address: "40 Bridge Road" },
+  { externalId: "shop-lakeside", name: "Lakeside", city: "Suburbs", address: "6 Lake View" },
 ];
 
-export const MOCK_AUTHORS_RO = [
-  "Andrei Ciobanu",
-  "Maria Rusu",
-  "Ion Popescu",
-  "Cristina Vasilache",
-  "Vasile Munteanu",
-  "Elena Cebotari",
-  "Dumitru Balan",
-  "Ana Grosu",
-  "Sergiu Lungu",
-  "Natalia Bejan",
-  "Mihai Rotaru",
-  "Doina Sîrbu",
-  "Victor Guțu",
-  "Liliana Croitoru",
-  "Radu Postolache",
+export const MOCK_AUTHORS_EN = [
+  "James Whitfield",
+  "Sarah Hollis",
+  "Daniel Okafor",
+  "Priya Raman",
+  "Tom Bracken",
+  "Aisha Nazir",
+  "Michael Yates",
+  "Laura Pemberton",
+  "Chris Donnelly",
+  "Emma Sandoval",
+  "Ben Ashworth",
+  "Nadia Farrell",
+  "Peter Lindqvist",
+  "Grace Mbeki",
+  "Oliver Stanton",
 ];
 
-export const MOCK_AUTHORS_RU = [
-  "Ольга Кириллова",
-  "Дмитрий Соколов",
-  "Ирина Морозова",
-  "Александр Ковалёв",
-  "Татьяна Волкова",
-  "Сергей Петров",
-  "Людмила Ткаченко",
-  "Виктор Романенко",
-  "Светлана Гончарова",
-  "Николай Ивашко",
-  "Анна Лебедева",
-  "Павел Дьяченко",
-];
+export const MOCK_AUTHORS_RO = ["Andrei Ciobanu", "Maria Rusu", "Elena Cebotari"];
 
-type Corpus = { ro: string[]; ru: string[] };
+export const MOCK_AUTHORS_RU = ["Ольга Кириллова", "Дмитрий Соколов", "Ирина Морозова"];
 
-/** Review bodies grouped by star rating. */
+type Corpus = { en: string[]; ro: string[]; ru: string[] };
+
+/**
+ * Review bodies by star rating.
+ *
+ * Written to exercise the whole app rather than to read naturally in bulk:
+ * between them these cover every topic the tagger recognises — queues, staff,
+ * pricing, price mismatches, cleanliness, freshness, stock, opening hours, the
+ * loyalty app and self-checkout — across all five ratings.
+ *
+ * A handful are Romanian and Russian on purpose. Replies are always written in
+ * the language the customer used, and that's impossible to demonstrate with an
+ * all-English dataset.
+ */
 export const MOCK_REVIEW_TEXTS: Record<1 | 2 | 3 | 4 | 5, Corpus> = {
   1: {
+    en: [
+      "Huge queue at the checkout. Two tills open out of eight and I waited 25 minutes for three items. Unacceptable at peak time.",
+      "Bought yoghurt two days past its date. Check the expiry dates on the shelf, this is not the first time.",
+      "The cashier was extremely rude and threw my change onto the counter without a word. I won't be coming back.",
+      "The shelf price and the price at the till were different. I complained and was told that is what the system says. Misleading.",
+      "The meat in the chilled section had a bad smell. I told a member of staff and he just shrugged.",
+      "Wet floor with no warning sign at all. I nearly fell while holding my child's hand.",
+      "Arrived at 8pm and the door was closed, even though the hours on the window say 9. No notice, nothing.",
+    ],
     ro: [
-      "Cozi enorme la case. Din șase case erau deschise doar două, am stat 25 de minute pentru trei produse. Inacceptabil la ora de vârf.",
-      "Am cumpărat iaurt expirat de două zile. Verificați termenele de valabilitate pe raft, nu e prima dată.",
-      "Casiera a fost extrem de nepoliticoasă, mi-a aruncat restul pe tejghea fără un cuvânt. Nu mai revin în acest magazin.",
-      "Prețul de pe raft nu corespunde cu cel de la casă. Am reclamat și mi s-a spus că „așa e în sistem”. Practic înșelătoare.",
-      "Carne cu miros suspect la raftul refrigerat. Am semnalat unui angajat și a ridicat din umeri.",
-      "Podeaua era udă fără niciun semn de avertizare, era să cad cu copilul de mână.",
+      "Cozi enorme la case. Din șase case erau deschise doar două, am stat 25 de minute pentru trei produse.",
+      "Am cumpărat iaurt expirat de două zile. Verificați termenele de valabilitate pe raft.",
     ],
     ru: [
       "Огромная очередь на кассе, работала одна касса из шести. Простояла почти полчаса из-за трёх товаров.",
-      "Купила творог с истёкшим сроком годности. Следите за датами на полках, это уже не первый раз.",
       "Кассир нахамила и бросила сдачу на стойку. Больше сюда не приду.",
-      "Цена на ценнике и на кассе не совпадает. На жалобу ответили, что «так в системе». Это обман покупателя.",
-      "В холодильнике мясо с неприятным запахом. Сказала сотруднику — он просто пожал плечами.",
     ],
   },
   2: {
+    en: [
+      "Handy for where I live, but the shelves are empty most evenings. Bread is gone by seven.",
+      "Too few tills open. The products are fine but the wait ruins it.",
+      "The fruit and veg section looks neglected and a lot of it is past its best for these prices.",
+      "I asked for help finding something and the assistant waved vaguely towards the far end of the store.",
+      "The self service tills are down more often than they work, and nobody comes over to help.",
+    ],
     ro: [
       "Magazinul e aproape de casă, dar rafturile sunt des goale seara. Pâinea se termină după ora 19.",
-      "Prea puține case deschise. Produsele sunt ok, dar așteptarea strică totul.",
-      "Zona de legume arată neîngrijită, multe produse ofilite. Prețurile nu justifică calitatea.",
-      "Am cerut ajutor să găsesc un produs și angajatul mi-a arătat vag cu mâna spre celălalt capăt al magazinului.",
     ],
-    ru: [
-      "Магазин рядом с домом, но вечером полки пустые. Хлеб заканчивается уже после семи.",
-      "Мало открытых касс. Товары нормальные, но ожидание всё портит.",
-      "Овощной отдел выглядит неухоженно, много вялого товара при таких ценах.",
-      "Попросила помочь найти товар — сотрудник просто махнул рукой в сторону другого конца зала.",
-    ],
+    ru: ["Мало открытых касс. Товары нормальные, но ожидание всё портит."],
   },
   3: {
-    ro: [
-      "Magazin ok pentru cumpărături rapide, dar uneori lipsesc produsele de bază. Personalul e amabil.",
-      "Curat și bine organizat, însă prețurile sunt puțin peste media din zonă.",
-      "Nimic special, dar își face treaba. Ar ajuta o casă self-service în plus.",
-      "Sortimentul de lactate e bun, la panificație lasă de dorit.",
+    en: [
+      "Fine for a quick shop, though basics are sometimes out of stock. Staff are polite enough.",
+      "Clean and tidy, but the prices are a little above others nearby.",
+      "Nothing special, does the job. Could use one more self checkout.",
+      "Good selection of dairy, the bakery is disappointing.",
+      "The loyalty app works well but the points take forever to add up to anything.",
     ],
-    ru: [
-      "Нормальный магазин для быстрых покупок, но иногда нет базовых товаров. Персонал вежливый.",
-      "Чисто и аккуратно, но цены чуть выше средних по району.",
-      "Ничего особенного, но со своей задачей справляется. Не хватает ещё одной кассы самообслуживания.",
-      "Молочный отдел хороший, а выпечка так себе.",
-    ],
+    ro: ["Curat și bine organizat, însă prețurile sunt puțin peste media din zonă."],
+    ru: ["Нормальный магазин для быстрых покупок, но иногда нет базовых товаров. Персонал вежливый."],
   },
   4: {
-    ro: [
-      "Magazin curat, personal amabil și program lung. Scad o stea pentru cozile de weekend.",
-      "Legume proaspete și prețuri corecte. Casele self-service ajută mult dimineața.",
-      "Găsesc aproape tot ce am nevoie. Aș vrea un sortiment mai mare de produse fără gluten.",
-      "Foarte comod, la câțiva pași de bloc. Angajații sunt săritori când întrebi ceva.",
-      "Promoțiile sunt bune, aplicația de fidelitate merită. Uneori se aglomerează seara.",
+    en: [
+      "Clean store, friendly staff and long opening hours. One star off for the weekend queues.",
+      "Fresh vegetables and fair prices. The self checkout really helps in the morning.",
+      "I find almost everything I need. Would like a wider gluten free selection.",
+      "Very convenient, two minutes from home. The staff are happy to help when you ask.",
+      "The discounts are genuinely good and the loyalty app is worth having. Gets busy in the evening.",
+      "Open late, which has saved me more than once. Prices are reasonable for the area.",
     ],
-    ru: [
-      "Чистый магазин, вежливый персонал и удобный график. Минус звезда за очереди в выходные.",
-      "Свежие овощи и адекватные цены. Кассы самообслуживания сильно выручают утром.",
-      "Нахожу почти всё, что нужно. Хотелось бы больше безглютеновых товаров.",
-      "Очень удобно, в двух шагах от дома. Сотрудники охотно подсказывают.",
-      "Хорошие акции, карта лояльности себя оправдывает. Вечером бывает людно.",
-    ],
+    ro: ["Legume proaspete și prețuri corecte. Casele self-service ajută mult dimineața."],
+    ru: ["Чистый магазин, вежливый персонал и удобный график. Минус звезда за очереди в выходные."],
   },
   5: {
-    ro: [
-      "Cel mai bun magazin din cartier. Curat, luminos, personal prietenos și mereu produse proaspete.",
-      "Recomand! Am găsit tot ce căutam, casierele lucrează rapid și cu zâmbetul pe buze.",
-      "Program excelent, deschis până târziu. M-a salvat de multe ori seara.",
-      "Carne și brânzeturi de calitate, sortiment local foarte bun. Felicitări echipei!",
-      "Am uitat portofelul și o angajată mi-a ținut coșul deoparte până m-am întors. Servicii impecabile.",
-      "Prețuri bune la promoții și rafturi mereu aranjate. Continuați tot așa.",
+    en: [
+      "Best shop in the neighbourhood. Clean, bright, friendly staff and always fresh produce.",
+      "Highly recommend. Found everything I was after and the cashiers are quick and cheerful.",
+      "Excellent hours, open late. It has rescued my evening plenty of times.",
+      "Quality meat and cheese, and a really good local selection. Well done to the team.",
+      "I forgot my wallet and an assistant held my basket aside until I came back. Faultless service.",
+      "Great prices on the discounts and the shelves are always neat. Keep it up.",
+      "Card payment at the self service till is fast and the terminal actually works. Small thing, big difference.",
     ],
-    ru: [
-      "Лучший магазин в районе. Чисто, светло, приветливый персонал и всегда свежие продукты.",
-      "Рекомендую! Нашла всё, что искала, кассиры работают быстро и с улыбкой.",
-      "Отличный график, открыто допоздна. Не раз выручало вечером.",
-      "Качественное мясо и сыры, хороший выбор местных производителей. Спасибо команде!",
-      "Забыл кошелёк, сотрудница отложила мою корзину до моего возвращения. Отличный сервис.",
-      "Хорошие цены по акциям и всегда аккуратные полки. Так держать.",
-    ],
+    ro: ["Cel mai bun magazin din cartier. Curat, luminos, personal prietenos și mereu produse proaspete."],
+    ru: ["Лучший магазин в районе. Чисто, светло, приветливый персонал и всегда свежие продукты."],
   },
 };
