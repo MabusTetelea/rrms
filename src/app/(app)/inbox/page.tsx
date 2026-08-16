@@ -180,9 +180,12 @@ export default async function InboxPage({
                     ? `${items.length} ${t.inbox.showingOf} ${total}`
                     : items.length}
                 </span>
+                {/* Both bindings are printed. An operator who reaches for the
+                    arrows finds them; one on a keyboard without usable arrows
+                    sees the alternative without having to be told. */}
                 <span className="flex items-center gap-1.5 font-mono text-[10px] text-ink-faint">
-                  <kbd className="kbd">J</kbd>
-                  <kbd className="kbd">K</kbd>
+                  <kbd className="kbd">↑↓</kbd>
+                  <kbd className="kbd">J K</kbd>
                 </span>
               </li>
               {items.map((item) => (

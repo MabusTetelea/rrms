@@ -1,5 +1,6 @@
 import { asc } from "drizzle-orm";
 import { BrandVoiceForm } from "@/components/brand-voice-form";
+import { GoogleAccount } from "@/components/google-account";
 import { PageHeader } from "@/components/shell";
 import { db } from "@/db";
 import { users } from "@/db/schema";
@@ -10,6 +11,7 @@ import { getDict } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale-server";
 import { getRecentSyncs } from "@/lib/queries";
 import { getBrandVoice } from "@/lib/settings";
+import { googleSetup } from "@/lib/google-setup";
 import { getPublishingSource, getReviewSources, SOURCE_NAMES } from "@/lib/sources";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +45,7 @@ export default async function SettingsPage() {
   }));
   const aiReady = isOpenRouterConfigured();
   const publisher = getPublishingSource();
+  const google = googleSetup();
 
   const dateFormat = new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
@@ -78,6 +81,11 @@ export default async function SettingsPage() {
               </div>
             )}
           </section>
+
+          {/* Everyone sees the connection state — an operator copying replies
+              by hand deserves to know why, and whether that's about to change.
+              Only an admin gets the button that talks to Google. */}
+          <GoogleAccount setup={google} isAdmin={isAdmin} t={t} />
 
           {isAdmin ? (
             <section>

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { locations, replies, reviews } from "@/db/schema";
 import { getPublishingSource } from "@/lib/sources";
+import { GbpSource } from "@/lib/sources/gbp";
 import { generateSuggestions } from "@/lib/ai/suggest";
 import { isOpenRouterConfigured } from "@/lib/ai/openrouter";
 import { currentUserOrNull, type SessionUser } from "@/lib/auth/session";
@@ -255,6 +256,33 @@ export async function setReviewStatusAction(
     revalidatePath("/inbox");
     revalidatePath("/overview");
     return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export type GoogleTestResult =
+  | { ok: true; locations: number }
+  | { ok: false; error: string };
+
+/**
+ * Ask Google whether the credentials actually work, and report what came back.
+ *
+ * Read-only — it lists the locations the account can see and counts them.
+ * Nothing is written, so this is safe to press while deciding whether to turn
+ * publishing on. Admin-only because the answer describes the account.
+ */
+export async function testGoogleConnectionAction(): Promise<GoogleTestResult> {
+  if (!(await requireAdminUser())) return NOT_ADMIN;
+
+  const source = new GbpSource();
+  if (!source.isConfigured()) {
+    return { ok: false, error: source.configHint };
+  }
+
+  try {
+    const locations = await source.listLocations();
+    return { ok: true, locations: locations.length };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }

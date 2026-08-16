@@ -234,6 +234,40 @@ const en = {
     model: "Model",
     syncHistory: "Recent syncs",
     noSyncs: "No syncs recorded yet.",
+    google: {
+      title: "Google account",
+      hint: "Connect the Google account that manages the Linella listings, and replies can be posted straight from here instead of copied across by hand.",
+      connected: "Connected",
+      notConnected: "Not connected",
+      req: {
+        clientId: "App ID",
+        clientSecret: "App secret",
+        refreshToken: "Account access",
+        accountId: "Account number",
+      },
+      readingGoogle: "Reading reviews from Google",
+      publishing: "Posting replies to Google",
+      present: "set",
+      missing: "missing",
+      on: "on",
+      off: "off",
+      test: "Test connection",
+      testing: "Checking",
+      testNeedsCredentials: "All four values are needed before this can be tested.",
+      testOk: "Working. Locations Google shows for this account:",
+      testFailed: "Google refused",
+      howTo: "How to connect",
+      step1:
+        "In Google Cloud Console, create a project and switch on the Business Profile APIs. Google reviews this by hand and it can take a few days.",
+      step2:
+        "Create OAuth credentials in that project, and put the ID and secret in .env.local as GBP_CLIENT_ID and GBP_CLIENT_SECRET.",
+      step3:
+        "Sign in once as the account that manages the listings, granting the business.manage permission, and keep the refresh token it gives you. That goes in GBP_REFRESH_TOKEN, with the account number in GBP_ACCOUNT_ID.",
+      step4:
+        "Add gbp to REVIEW_SOURCE, set PUBLISH_REPLIES=true, and restart. Press Test connection above before trusting it.",
+      secretsNote:
+        "These live in .env.local on the server, not in this page. Anything typed into a browser form would be stored in the database and shown to everyone who opens Settings.",
+    },
     accessTitle: "Who has access",
     accessHint: "There is no self-signup. Accounts are created from the command line.",
     accountName: "Account",
@@ -495,6 +529,40 @@ const ro: Dict = {
     model: "Model",
     syncHistory: "Sincronizări recente",
     noSyncs: "Nicio sincronizare înregistrată.",
+    google: {
+      title: "Cont Google",
+      hint: "Conectează contul Google care administrează paginile Linella, iar răspunsurile pot fi publicate direct de aici, fără copiere manuală.",
+      connected: "Conectat",
+      notConnected: "Neconectat",
+      req: {
+        clientId: "ID aplicație",
+        clientSecret: "Cheie secretă",
+        refreshToken: "Acces la cont",
+        accountId: "Număr de cont",
+      },
+      readingGoogle: "Citește recenziile de pe Google",
+      publishing: "Publică răspunsuri pe Google",
+      present: "setat",
+      missing: "lipsește",
+      on: "activ",
+      off: "inactiv",
+      test: "Testează conexiunea",
+      testing: "Se verifică",
+      testNeedsCredentials: "Toate cele patru valori sunt necesare înainte de test.",
+      testOk: "Funcționează. Locații vizibile pentru acest cont:",
+      testFailed: "Google a refuzat",
+      howTo: "Cum se conectează",
+      step1:
+        "În Google Cloud Console, creează un proiect și activează Business Profile APIs. Google verifică manual cererea, poate dura câteva zile.",
+      step2:
+        "Creează credențiale OAuth în acel proiect și pune ID-ul și cheia în .env.local, ca GBP_CLIENT_ID și GBP_CLIENT_SECRET.",
+      step3:
+        "Autentifică-te o dată cu contul care administrează paginile, acordând permisiunea business.manage, și păstrează refresh token-ul primit. Acesta merge în GBP_REFRESH_TOKEN, iar numărul contului în GBP_ACCOUNT_ID.",
+      step4:
+        "Adaugă gbp în REVIEW_SOURCE, setează PUBLISH_REPLIES=true și repornește. Apasă Testează conexiunea înainte de a te baza pe ea.",
+      secretsNote:
+        "Acestea stau în .env.local pe server, nu în această pagină. Orice s-ar introduce într-un formular din browser ar fi salvat în baza de date și vizibil oricui deschide Setările.",
+    },
     accessTitle: "Cine are acces",
     accessHint: "Nu există înregistrare liberă. Conturile se creează din linia de comandă.",
     accountName: "Cont",
@@ -752,6 +820,40 @@ const ru: Dict = {
     model: "Модель",
     syncHistory: "Последние синхронизации",
     noSyncs: "Синхронизаций пока не было.",
+    google: {
+      title: "Аккаунт Google",
+      hint: "Подключите аккаунт Google, который управляет страницами Linella, и ответы можно будет публиковать прямо отсюда, без копирования вручную.",
+      connected: "Подключён",
+      notConnected: "Не подключён",
+      req: {
+        clientId: "ID приложения",
+        clientSecret: "Секретный ключ",
+        refreshToken: "Доступ к аккаунту",
+        accountId: "Номер аккаунта",
+      },
+      readingGoogle: "Читает отзывы из Google",
+      publishing: "Публикует ответы в Google",
+      present: "задано",
+      missing: "нет",
+      on: "вкл",
+      off: "выкл",
+      test: "Проверить подключение",
+      testing: "Проверяем",
+      testNeedsCredentials: "Для проверки нужны все четыре значения.",
+      testOk: "Работает. Локаций видно для этого аккаунта:",
+      testFailed: "Google отказал",
+      howTo: "Как подключить",
+      step1:
+        "В Google Cloud Console создайте проект и включите Business Profile APIs. Google рассматривает заявку вручную, это может занять несколько дней.",
+      step2:
+        "Создайте в проекте учётные данные OAuth и впишите ID и секрет в .env.local как GBP_CLIENT_ID и GBP_CLIENT_SECRET.",
+      step3:
+        "Один раз войдите под аккаунтом, управляющим страницами, выдав разрешение business.manage, и сохраните полученный refresh token. Он идёт в GBP_REFRESH_TOKEN, номер аккаунта — в GBP_ACCOUNT_ID.",
+      step4:
+        "Добавьте gbp в REVIEW_SOURCE, поставьте PUBLISH_REPLIES=true и перезапустите. Перед тем как полагаться на это, нажмите «Проверить подключение».",
+      secretsNote:
+        "Они хранятся в .env.local на сервере, а не на этой странице. Всё, что вводится в форму в браузере, попало бы в базу данных и было бы видно каждому, кто откроет Настройки.",
+    },
     accessTitle: "У кого есть доступ",
     accessHint: "Самостоятельной регистрации нет. Аккаунты создаются из командной строки.",
     accountName: "Аккаунт",
