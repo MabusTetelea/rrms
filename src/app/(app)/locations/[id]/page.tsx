@@ -97,7 +97,7 @@ export default async function LocationPage({
         </div>
 
         <Link
-          href={`/inbox?filter=unanswered&store=${store.id}`}
+          href={`/inbox?filter=to_answer&store=${store.id}`}
           className="mt-5 inline-block rounded-[2px] bg-ink px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
         >
           {t.locations.answerThese}

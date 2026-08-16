@@ -10,6 +10,7 @@ import { generateSuggestions } from "@/lib/ai/suggest";
 import { isOpenRouterConfigured } from "@/lib/ai/openrouter";
 import { currentUserOrNull, type SessionUser } from "@/lib/auth/session";
 import { LOCALE_COOKIE, isLocale } from "@/lib/i18n";
+import { hit } from "@/lib/rate-limit";
 import { DEFAULT_BRAND_VOICE, setBrandVoice } from "@/lib/settings";
 import { runSync } from "@/lib/sync";
 
@@ -49,17 +50,43 @@ export type DraftsResult =
     }
   | { ok: false; error: string };
 
+/**
+ * Per-operator ceiling on drafting.
+ *
+ * This is the only action that spends someone else's quota — the free tier is
+ * 50 requests a day for the whole deployment, and one click is one request. A
+ * held-down G key, or a double-click on a slow connection, could burn the day's
+ * allowance for everyone before anyone noticed. 20 an hour is far more than
+ * answering reviews actually needs and still leaves room for a second operator.
+ */
+const DRAFT_LIMIT = { max: 20, windowMs: 60 * 60_000 };
+
 export async function generateDraftsAction(
   reviewId: string,
   extraInstruction?: string,
 ): Promise<DraftsResult> {
   // Guarded first: an unauthenticated caller must not be able to spend tokens.
-  if (!(await requireOperator())) return DENIED;
+  const user = await requireOperator();
+  if (!user) return DENIED;
 
   if (!isOpenRouterConfigured()) {
     return {
       ok: false,
       error: "OPENROUTER_API_KEY is not set.",
+    };
+  }
+
+  // Counted before the call, so a request that fails upstream still costs a
+  // slot — a failing model is exactly when a frustrated operator retries most.
+  const quota = hit(`drafts:${user.id}`, DRAFT_LIMIT);
+  if (!quota.ok) {
+    const minutes = Math.max(
+      1,
+      Math.ceil((quota.resetAt.getTime() - Date.now()) / 60_000),
+    );
+    return {
+      ok: false,
+      error: `Draft limit reached (${DRAFT_LIMIT.max} per hour). Try again in ${minutes} min, or write the reply by hand.`,
     };
   }
 
@@ -115,7 +142,7 @@ export async function saveReplyAction(
       .where(eq(reviews.id, reviewId));
 
     revalidatePath("/inbox");
-    revalidatePath("/");
+    revalidatePath("/overview");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -207,7 +234,7 @@ export async function publishReplyAction(
       .where(eq(reviews.id, reviewId));
 
     revalidatePath("/inbox");
-    revalidatePath("/");
+    revalidatePath("/overview");
     return { ok: true, publishedAt: publishedAt.toISOString() };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -226,7 +253,7 @@ export async function setReviewStatusAction(
       .set({ status, updatedAt: new Date() })
       .where(eq(reviews.id, reviewId));
     revalidatePath("/inbox");
-    revalidatePath("/");
+    revalidatePath("/overview");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };

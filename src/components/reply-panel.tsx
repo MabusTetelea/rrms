@@ -37,6 +37,9 @@ export function ReplyPanel({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [text, setText] = useState(review.reply?.text ?? "");
   const [instruction, setInstruction] = useState("");
+  // Steering the model is an occasional thing, so it stays folded away rather
+  // than taking up room in the flow every operator walks a hundred times a day.
+  const [showInstruction, setShowInstruction] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Which heading the error sits under — drafting and publishing fail for
   // completely different reasons and shouldn't share a label.
@@ -87,14 +90,6 @@ export function ReplyPanel({
       document.body.removeChild(scratch);
       return ok;
     }
-  }
-
-  function copyOnly() {
-    void copyToClipboard(text).then((ok) => {
-      if (!ok) return;
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    });
   }
 
   function copyAndSave() {
@@ -313,16 +308,27 @@ export function ReplyPanel({
         ) : null}
 
         {aiEnabled ? (
-          <label className="mt-4 block">
-            <span className="eyebrow">{t.inbox.extraInstruction}</span>
-            <input
-              type="text"
-              value={instruction}
-              onChange={(event) => setInstruction(event.target.value)}
-              placeholder={t.inbox.extraPlaceholder}
-              className="mt-1.5 w-full rounded-[2px] border border-rule bg-surface px-3 py-2 text-sm placeholder:text-ink-faint"
-            />
-          </label>
+          showInstruction ? (
+            <label className="mt-4 block">
+              <span className="eyebrow">{t.inbox.extraInstruction}</span>
+              <input
+                type="text"
+                value={instruction}
+                onChange={(event) => setInstruction(event.target.value)}
+                placeholder={t.inbox.extraPlaceholder}
+                autoFocus
+                className="mt-1.5 w-full rounded-[2px] border border-rule bg-surface px-3 py-2 text-sm placeholder:text-ink-faint"
+              />
+            </label>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowInstruction(true)}
+              className="mt-3 text-xs text-ink-soft underline underline-offset-2 hover:text-ink"
+            >
+              {t.inbox.addNote}
+            </button>
+          )
         ) : null}
 
         {error ? (
@@ -455,6 +461,12 @@ export function ReplyPanel({
             </button>
           ) : null}
 
+          {/*
+            One button ends a review. There used to be three ways to say "I'm
+            finished here" — copy and file it, copy without filing it, publish —
+            sitting side by side as equals. Copying and filing is what happens
+            almost every time, so it is the only one that looks like a button.
+          */}
           <button
             type="button"
             onClick={copyAndSave}
@@ -468,22 +480,14 @@ export function ReplyPanel({
             {copied ? t.inbox.copied : t.inbox.copyReply}
             <kbd className={`kbd ${publishEnabled ? "" : "kbd-invert"}`}>Ctrl ⏎</kbd>
           </button>
-          <button
-            type="button"
-            onClick={copyOnly}
-            disabled={!text.trim()}
-            className="rounded-[2px] border border-rule px-3 py-2 text-sm transition-colors hover:bg-rule-soft disabled:opacity-40"
-          >
-            {t.inbox.copyOnly}
-          </button>
 
-          <span className="ml-auto flex items-center gap-2">
+          <span className="ml-auto flex items-center gap-3">
             {review.status === "skipped" || review.status === "replied" ? (
               <button
                 type="button"
                 onClick={() => setStatus("new")}
                 disabled={saving}
-                className="rounded-[2px] border border-rule px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-rule-soft"
+                className="text-sm text-ink-soft underline underline-offset-2 transition-colors hover:text-ink disabled:opacity-40"
               >
                 {t.inbox.reopen}
               </button>
@@ -492,7 +496,7 @@ export function ReplyPanel({
                 type="button"
                 onClick={() => setStatus("skipped")}
                 disabled={saving}
-                className="rounded-[2px] border border-rule px-3 py-2 text-sm text-ink-soft transition-colors hover:bg-rule-soft"
+                className="text-sm text-ink-soft underline underline-offset-2 transition-colors hover:text-ink disabled:opacity-40"
               >
                 {t.inbox.skip}
               </button>

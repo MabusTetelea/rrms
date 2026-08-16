@@ -22,7 +22,7 @@ export async function Shell({
     <div className="flex min-h-full flex-col md:flex-row">
       <aside className="bg-ink text-white md:sticky md:top-0 md:h-screen md:w-56 md:shrink-0 md:flex md:flex-col">
         <div className="flex items-center justify-between gap-4 px-4 py-3 md:block md:py-5">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/inbox" className="flex items-center gap-2.5">
             {/* Shelf-tag mark: a red price block next to the wordmark. */}
             <span
               aria-hidden="true"
@@ -43,10 +43,11 @@ export async function Shell({
         </div>
 
         <div className="overflow-x-auto px-2 pb-3 md:mt-4 md:overflow-visible md:px-0 md:pb-0">
+          {/* The queue comes first, because it is the job. */}
           <NavLinks
             items={[
-              { href: "/", label: t.nav.dashboard },
-              { href: "/inbox", label: t.nav.inbox, badge: counts.unanswered },
+              { href: "/inbox", label: t.nav.inbox, badge: counts.to_answer },
+              { href: "/overview", label: t.nav.dashboard },
               { href: "/locations", label: t.nav.locations },
               { href: "/settings", label: t.nav.settings },
             ]}

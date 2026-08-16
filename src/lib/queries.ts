@@ -8,11 +8,13 @@ import {
   ilike,
   inArray,
   isNull,
+  lte,
   ne,
   or,
   sql,
 } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { cache } from "react";
 import { db } from "@/db";
 import { locations, replies, reviews, suggestions, syncRuns } from "@/db/schema";
 
@@ -23,6 +25,9 @@ import type { Topic } from "@/lib/text";
 import { isZoneId, type ZoneId } from "@/lib/zones";
 
 const DAY_MS = 86_400_000;
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ---------------------------------------------------------------------------
 // Overview
@@ -41,7 +46,9 @@ export async function getOverview(): Promise<Overview> {
     .select({
       total: count(),
       avg: sql<string | null>`avg(${reviews.rating})`,
-      unanswered: sql<number>`count(*) filter (where ${reviews.status} in ('new','in_progress'))::int`,
+      // "Waiting" has to mean the same thing here as it does in the queue, or
+      // the headline number and the list disagree with each other.
+      unanswered: sql<number>`count(*) filter (where ${reviews.status} in ('new','in_progress') and ${reviews.rating} <= ${REPLY_THRESHOLD})::int`,
       negativeRecent: sql<number>`count(*) filter (where ${reviews.rating} <= 2 and ${reviews.publishedAt} >= now() - interval '30 days')::int`,
     })
     .from(reviews);
@@ -115,12 +122,25 @@ export type StoreQuery = {
   zone?: ZoneId;
   /** "rating" = worst rated first (default), "backlog" = biggest queue first. */
   sort?: "rating" | "backlog";
+  /** One canonical store, for its own page. Skips aggregating the whole estate. */
+  id?: string;
 };
 
-export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[]> {
+/**
+ * Wrapped in React's `cache` so the several places that want the store table in
+ * one request — the zone rollup and the backlog list on the dashboard, say —
+ * share a single aggregate instead of running it once each.
+ *
+ * The dedupe is by argument identity, so it only helps the no-argument calls.
+ * That's deliberate: those are the ones that repeat.
+ */
+export const getStoreStats = cache(getStoreStatsUncached);
+
+async function getStoreStatsUncached(query: StoreQuery = {}): Promise<StoreStats[]> {
   // Canonical rows only — merged ones are folded in below.
   const conditions = [eq(locations.active, true), isNull(locations.mergedInto)];
 
+  if (query.id) conditions.push(eq(locations.id, query.id));
   if (query.zone) conditions.push(eq(locations.zone, query.zone));
   if (query.q?.trim()) {
     const term = `%${query.q.trim()}%`;
@@ -153,7 +173,7 @@ export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[
       googleUrl: locations.googleUrl,
       total: sql<number>`count(${reviews.id})::int`,
       avg: sql<string | null>`avg(${reviews.rating})`,
-      unanswered: sql<number>`count(${reviews.id}) filter (where ${reviews.status} in ('new','in_progress'))::int`,
+      unanswered: sql<number>`count(${reviews.id}) filter (where ${reviews.status} in ('new','in_progress') and ${reviews.rating} <= ${REPLY_THRESHOLD})::int`,
       negativeUnanswered: sql<number>`count(${reviews.id}) filter (where ${reviews.status} in ('new','in_progress') and ${reviews.rating} <= 2)::int`,
       s1: sql<number>`count(${reviews.id}) filter (where ${reviews.rating} = 1)::int`,
       s2: sql<number>`count(${reviews.id}) filter (where ${reviews.rating} = 2)::int`,
@@ -176,7 +196,7 @@ export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[
     .orderBy(
       query.sort === "backlog"
         ? desc(
-            sql`count(${reviews.id}) filter (where ${reviews.status} in ('new','in_progress'))`,
+            sql`count(${reviews.id}) filter (where ${reviews.status} in ('new','in_progress') and ${reviews.rating} <= ${REPLY_THRESHOLD})`,
           )
         : asc(sql`avg(${reviews.rating})`),
     );
@@ -198,12 +218,28 @@ export async function getStoreStats(query: StoreQuery = {}): Promise<StoreStats[
   }));
 }
 
+/**
+ * One store's figures.
+ *
+ * Resolves the id to its canonical row first, then aggregates only that store.
+ * This used to build the whole estate's table and pick one row out of it in JS,
+ * which is free at a dozen shops and silly at a couple of hundred.
+ */
 export async function getStore(id: string): Promise<StoreStats | null> {
-  const all = await getStoreStats();
-  const direct = all.find((s) => s.id === id);
-  if (direct) return direct;
-  // Asked for a merged row — show the canonical store it belongs to.
-  return all.find((s) => s.mergedFrom.some((m) => m.id === id)) ?? null;
+  // The id comes straight off the URL. Postgres raises on a malformed uuid, so
+  // a junk path has to be a miss here rather than a 500 on the store page.
+  if (!UUID_RE.test(id)) return null;
+
+  const [row] = await db
+    .select({ canonicalId: sql<string>`coalesce(${locations.mergedInto}, ${locations.id})` })
+    .from(locations)
+    .where(eq(locations.id, id));
+
+  // Asked for a merged row — its canonical store is what has the numbers.
+  if (!row) return null;
+
+  const [store] = await getStoreStats({ id: row.canonicalId });
+  return store ?? null;
 }
 
 /** Locations that can still be merged into something (canonical, not itself). */
@@ -320,13 +356,29 @@ export async function getTopicStats(days = 90): Promise<TopicStat[]> {
 // Inbox
 // ---------------------------------------------------------------------------
 
-export const INBOX_FILTERS = [
-  "unanswered",
-  "negative",
-  "replied",
-  "skipped",
-  "all",
-] as const;
+/**
+ * The worst rating that still earns a reply.
+ *
+ * A deliberate business decision, not a technical one: roughly two thirds of
+ * everything customers write is 4- and 5-star praise, and answering all of it
+ * buried the reviews that actually cost the chain something. At 3 the queue
+ * holds everyone who was unhappy or lukewarm.
+ *
+ * Nothing is deleted or hidden by this — the happy reviews still count towards
+ * every rating on the dashboard, and the "Everything" tab still lists them.
+ * Raise it to 5 to go back to answering the lot.
+ */
+export const REPLY_THRESHOLD = 3;
+
+/**
+ * Three tabs, not five.
+ *
+ * "To answer" is the work. "Done" is what's been dealt with — replied or
+ * skipped — which doubles as the record of what was actually sent. Sorting
+ * already puts the angriest review at the top of the queue, so the old
+ * "Negative" tab was doing a job the ordering does for free.
+ */
+export const INBOX_FILTERS = ["to_answer", "done", "all"] as const;
 export type InboxFilter = (typeof INBOX_FILTERS)[number];
 
 export type InboxItem = {
@@ -341,6 +393,11 @@ export type InboxItem = {
   storeName: string;
   storeCode: string;
   hasExistingReply: boolean;
+  /** What was actually sent. Only loaded for the Done tab. */
+  replyText?: string | null;
+  /** Who sent it, snapshotted at the time. */
+  replyOperator?: string | null;
+  replyAt?: Date | null;
 };
 
 /**
@@ -348,8 +405,11 @@ export type InboxItem = {
  * unanswered costs more than a five-star one, but a run of praise is
  * sometimes the faster way to clear a backlog — hence the choice.
  */
-export const INBOX_SORTS = ["worst", "best", "newest", "oldest"] as const;
+export const INBOX_SORTS = ["worst", "best", "newest", "oldest", "handled"] as const;
 export type InboxSort = (typeof INBOX_SORTS)[number];
+
+/** "handled" only makes sense on the Done tab, so it isn't offered elsewhere. */
+export const QUEUE_SORTS = INBOX_SORTS.filter((s) => s !== "handled");
 
 export type InboxQuery = {
   filter?: InboxFilter;
@@ -359,19 +419,42 @@ export type InboxQuery = {
   limit?: number;
 };
 
+/**
+ * How many rows the queue shows before asking. The window grows a page at a
+ * time rather than paginating: the operator walks the queue with J/K, and a
+ * page boundary that silently resets that walk is worse than a longer list.
+ */
+export const INBOX_PAGE_SIZE = 100;
+
+/** Ceiling on the grown window, so one operator can't ask for the whole table. */
+export const INBOX_MAX_WINDOW = 1000;
+
+/**
+ * Free-text match over the review, its author and the store name.
+ *
+ * `%` and `_` are escaped: an operator searching for "100%" means the string,
+ * not a wildcard, and Postgres would otherwise read it as one.
+ */
+function searchCondition(q?: string) {
+  const term = q?.trim();
+  if (!term) return undefined;
+  const like = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
+  return or(
+    ilike(reviews.text, like),
+    ilike(reviews.authorName, like),
+    ilike(locations.name, like),
+  );
+}
+
 function filterCondition(filter: InboxFilter) {
   switch (filter) {
-    case "unanswered":
-      return inArray(reviews.status, ["new", "in_progress"]);
-    case "negative":
+    case "to_answer":
       return and(
         inArray(reviews.status, ["new", "in_progress"]),
-        sql`${reviews.rating} <= 2`,
+        lte(reviews.rating, REPLY_THRESHOLD),
       );
-    case "replied":
-      return eq(reviews.status, "replied");
-    case "skipped":
-      return eq(reviews.status, "skipped");
+    case "done":
+      return inArray(reviews.status, ["replied", "skipped"]);
     case "all":
       return undefined;
   }
@@ -385,6 +468,9 @@ function orderFor(sort: InboxSort) {
       return [desc(reviews.publishedAt)];
     case "oldest":
       return [asc(reviews.publishedAt)];
+    // When it was dealt with, not when it was written.
+    case "handled":
+      return [desc(reviews.updatedAt)];
     case "worst":
     default:
       return [asc(reviews.rating), desc(reviews.publishedAt)];
@@ -392,16 +478,19 @@ function orderFor(sort: InboxSort) {
 }
 
 export async function getInbox(query: InboxQuery = {}): Promise<InboxItem[]> {
-  const { filter = "unanswered", locationId, q, sort = "worst", limit = 200 } = query;
+  const {
+    filter = "to_answer",
+    locationId,
+    q,
+    // Done is a record of what happened, so it reads most-recent-first unless
+    // asked otherwise. The work queue reads worst-first.
+    sort = filter === "done" ? "handled" : "worst",
+    limit = INBOX_PAGE_SIZE,
+  } = query;
 
   const conditions = [filterCondition(filter)];
   if (locationId) conditions.push(reviewsInStore(locationId));
-  if (q?.trim()) {
-    const term = `%${q.trim()}%`;
-    conditions.push(
-      or(ilike(reviews.text, term), ilike(reviews.authorName, term), ilike(locations.name, term)),
-    );
-  }
+  conditions.push(searchCondition(q));
 
   const where = conditions.filter(Boolean);
 
@@ -422,9 +511,9 @@ export async function getInbox(query: InboxQuery = {}): Promise<InboxItem[]> {
     .innerJoin(locations, eq(reviews.locationId, locations.id))
     .where(where.length ? and(...where) : undefined)
     .orderBy(...orderFor(sort))
-    .limit(limit);
+    .limit(Math.min(Math.max(limit, 1), INBOX_MAX_WINDOW));
 
-  return rows.map((r) => ({
+  const items: InboxItem[] = rows.map((r) => ({
     id: r.id,
     rating: r.rating,
     text: r.text,
@@ -437,33 +526,94 @@ export async function getInbox(query: InboxQuery = {}): Promise<InboxItem[]> {
     storeCode: storeCode(r.storeName),
     hasExistingReply: Boolean(r.existingReplyText),
   }));
+
+  /*
+   * On the Done tab, attach what was actually sent. This is the record of past
+   * replies — the operator's own words, who sent them and when — so it belongs
+   * next to the review rather than on a separate history screen.
+   *
+   * Fetched as one extra query over just the rows on screen, and only for this
+   * tab, so the working queue doesn't pay for it.
+   */
+  if (filter === "done" && items.length > 0) {
+    const sent = await latestRepliesFor(items.map((item) => item.id));
+    for (const item of items) {
+      const reply = sent.get(item.id);
+      item.replyText = reply?.text ?? null;
+      item.replyOperator = reply?.operator ?? null;
+      item.replyAt = reply?.createdAt ?? null;
+    }
+  }
+
+  return items;
 }
 
-export async function countInboxByFilter(locationId?: string) {
-  const base = locationId ? reviewsInStore(locationId) : undefined;
+/**
+ * The most recent reply per review, for a set of reviews. DISTINCT ON is
+ * Postgres's "one row per group" — cheaper here than a window function or a
+ * round trip per review.
+ */
+async function latestRepliesFor(reviewIds: string[]) {
+  const rows = await db
+    .selectDistinctOn([replies.reviewId], {
+      reviewId: replies.reviewId,
+      text: replies.text,
+      operator: replies.operator,
+      createdAt: replies.createdAt,
+    })
+    .from(replies)
+    .where(inArray(replies.reviewId, reviewIds))
+    .orderBy(replies.reviewId, desc(replies.createdAt));
+
+  return new Map(rows.map((r) => [r.reviewId, r]));
+}
+
+/**
+ * Totals per filter, used for the filter chips and to decide whether the queue
+ * has more rows than it is showing.
+ *
+ * Takes the same search term as getInbox on purpose: these numbers sit directly
+ * above the list, and a chip counting rows the list isn't allowed to show is
+ * just a lie about the queue.
+ */
+export async function countInboxByFilter(locationId?: string, q?: string) {
+  const conditions = [
+    locationId ? reviewsInStore(locationId) : undefined,
+    searchCondition(q),
+  ].filter(Boolean);
 
   const [row] = await db
     .select({
-      unanswered: sql<number>`count(*) filter (where ${reviews.status} in ('new','in_progress'))::int`,
-      negative: sql<number>`count(*) filter (where ${reviews.status} in ('new','in_progress') and ${reviews.rating} <= 2)::int`,
-      replied: sql<number>`count(*) filter (where ${reviews.status} = 'replied')::int`,
-      skipped: sql<number>`count(*) filter (where ${reviews.status} = 'skipped')::int`,
+      to_answer: sql<number>`count(*) filter (where ${reviews.status} in ('new','in_progress') and ${reviews.rating} <= ${REPLY_THRESHOLD})::int`,
+      done: sql<number>`count(*) filter (where ${reviews.status} in ('replied','skipped'))::int`,
       all: sql<number>`count(*)::int`,
     })
+    // Joined because the search term matches on the store name too. Every
+    // review has a location (the column is NOT NULL), so this never drops rows.
     .from(reviews)
-    .where(base);
+    .innerJoin(locations, eq(reviews.locationId, locations.id))
+    .where(conditions.length ? and(...conditions) : undefined);
 
-  return row ?? { unanswered: 0, negative: 0, replied: 0, skipped: 0, all: 0 };
+  return row ?? { to_answer: 0, done: 0, all: 0 };
 }
 
 // ---------------------------------------------------------------------------
 // Single review
 // ---------------------------------------------------------------------------
 
-/** The individual stores carrying the biggest unanswered queues. */
+/**
+ * The individual stores carrying the biggest unanswered queues.
+ *
+ * Sorted here rather than in SQL so this shares the cached no-argument
+ * aggregate with the zone rollup — the dashboard wants both, and they were
+ * running the same expensive query twice for want of a different ORDER BY.
+ */
 export async function getBacklogStores(limit = 6): Promise<StoreStats[]> {
-  const stores = await getStoreStats({ sort: "backlog" });
-  return stores.filter((s) => s.unanswered > 0).slice(0, limit);
+  const stores = await getStoreStats();
+  return stores
+    .filter((s) => s.unanswered > 0)
+    .sort((a, b) => b.unanswered - a.unanswered || b.negativeUnanswered - a.negativeUnanswered)
+    .slice(0, limit);
 }
 
 export type ReviewDetail = {

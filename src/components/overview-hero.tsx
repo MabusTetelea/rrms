@@ -52,7 +52,7 @@ export function OverviewHero({
           <span className="figure text-ink">{overview.totalReviews}</span>{" "}
           {t.dashboard.heroTracked}
         </span>
-        <Link href="/inbox?filter=negative" className="hover:text-ink">
+        <Link href="/inbox?filter=to_answer" className="hover:text-ink">
           <span className="figure text-bad">{overview.negativeRecent}</span>{" "}
           {t.dashboard.heroNegative}
         </Link>
