@@ -215,7 +215,23 @@ export class GbpSource implements ReplyCapableSource {
         if (!rev.reviewId || !rating) continue;
 
         const publishedAt = new Date(rev.createTime ?? rev.updateTime ?? Date.now());
-        if (since && publishedAt <= since) {
+
+        /*
+         * The watermark has to be compared against the field the page is
+         * ordered by. This used to compare createTime while ordering by
+         * updateTime, so a single old review that had been edited — or that
+         * the owner had replied to — sorted to the top of the first page and
+         * ended the entire scan, taking every genuinely new review below it.
+         *
+         * `since` is the newest publishedAt we hold, which is never later than
+         * the newest updateTime, so this errs toward re-fetching. Upserts are
+         * keyed on (source, external_id), so the cost of overlap is a few
+         * redundant writes — never a missed review. It also means an owner
+         * reply added on Google to an old review now flows back in on an
+         * incremental sync instead of waiting for ?full=1.
+         */
+        const changedAt = new Date(rev.updateTime ?? rev.createTime ?? Date.now());
+        if (since && changedAt <= since) {
           reachedKnown = true;
           break;
         }
