@@ -82,7 +82,7 @@ export async function chatJson<T>(
         "Content-Type": "application/json",
         // OpenRouter uses these for attribution on their dashboard.
         "HTTP-Referer": process.env.OPENROUTER_SITE_URL ?? "http://localhost:3000",
-        "X-Title": process.env.OPENROUTER_SITE_NAME ?? "Linella Reviews",
+        "X-Title": process.env.OPENROUTER_SITE_NAME ?? "RRMS",
       },
       body: JSON.stringify({
         model,

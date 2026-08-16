@@ -5,9 +5,10 @@ import { appSettings } from "@/db/schema";
 /**
  * Brand voice is editable at runtime (Settings page) rather than hardcoded in
  * the prompt, so customer-care can tune the tone without a deploy.
+ *
+ * Which chain this deployment serves is a different question, and lives in
+ * lib/company — it is configuration, not a preference.
  */
-/** The chain never changes, so it isn't a setting. */
-export const COMPANY_NAME = "Linella";
 
 export type BrandVoice = {
   /** Free text folded into the system prompt. */
@@ -18,7 +19,7 @@ export type BrandVoice = {
    * means replies won't offer a channel.
    */
   contactChannel: string;
-  /** Optional sign-off, e.g. "Echipa Linella". Empty = no sign-off. */
+  /** Optional sign-off, e.g. "The store team". Empty = no sign-off. */
   signature: string;
   maxSentences: number;
 };

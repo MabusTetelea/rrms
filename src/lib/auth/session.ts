@@ -7,7 +7,7 @@ import { cache } from "react";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 
-export const SESSION_COOKIE = "linella_session";
+export const SESSION_COOKIE = "rrms_session";
 const SESSION_DAYS = 14;
 
 export type SessionUser = {

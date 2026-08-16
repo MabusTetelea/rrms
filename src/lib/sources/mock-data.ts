@@ -10,7 +10,7 @@ import type { SourceLocation } from "./types";
 export const MOCK_LOCATIONS: SourceLocation[] = [
   {
     externalId: "mock-ciocana",
-    name: "Linella — Ciocana",
+    name: "Ciocana",
     address: "bd. Mircea cel Bătrân 9, Chișinău",
     city: "Chișinău",
     lat: 47.0512,
@@ -18,7 +18,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-botanica",
-    name: "Linella — Botanica",
+    name: "Botanica",
     address: "bd. Dacia 32, Chișinău",
     city: "Chișinău",
     lat: 46.9846,
@@ -26,7 +26,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-riscani",
-    name: "Linella — Râșcani",
+    name: "Râșcani",
     address: "str. Kiev 7, Chișinău",
     city: "Chișinău",
     lat: 47.0489,
@@ -34,7 +34,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-buiucani",
-    name: "Linella — Buiucani",
+    name: "Buiucani",
     address: "str. Alba Iulia 75, Chișinău",
     city: "Chișinău",
     lat: 47.0301,
@@ -42,7 +42,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-centru",
-    name: "Linella — Centru",
+    name: "Centru",
     address: "bd. Ștefan cel Mare 128, Chișinău",
     city: "Chișinău",
     lat: 47.0246,
@@ -50,7 +50,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-telecentru",
-    name: "Linella — Telecentru",
+    name: "Telecentru",
     address: "str. Sihastrului 15, Chișinău",
     city: "Chișinău",
     lat: 47.0021,
@@ -58,7 +58,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-durlesti",
-    name: "Linella — Durlești",
+    name: "Durlești",
     address: "str. Cartușa 4, Durlești",
     city: "Durlești",
     lat: 47.0234,
@@ -66,7 +66,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-balti",
-    name: "Linella — Bălți",
+    name: "Bălți",
     address: "str. Independenței 20, Bălți",
     city: "Bălți",
     lat: 47.7615,
@@ -74,7 +74,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-orhei",
-    name: "Linella — Orhei",
+    name: "Orhei",
     address: "str. Vasile Lupu 36, Orhei",
     city: "Orhei",
     lat: 47.3831,
@@ -82,7 +82,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-cahul",
-    name: "Linella — Cahul",
+    name: "Cahul",
     address: "str. Ștefan cel Mare 4, Cahul",
     city: "Cahul",
     lat: 45.9075,
@@ -90,7 +90,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-ungheni",
-    name: "Linella — Ungheni",
+    name: "Ungheni",
     address: "str. Națională 15, Ungheni",
     city: "Ungheni",
     lat: 47.2089,
@@ -98,7 +98,7 @@ export const MOCK_LOCATIONS: SourceLocation[] = [
   },
   {
     externalId: "mock-ialoveni",
-    name: "Linella — Ialoveni",
+    name: "Ialoveni",
     address: "str. Alexandru cel Bun 41, Ialoveni",
     city: "Ialoveni",
     lat: 46.9412,

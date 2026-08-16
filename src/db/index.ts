@@ -8,7 +8,7 @@ import * as schema from "./schema";
 
 const connectionString =
   process.env.DATABASE_URL ??
-  "postgres://reviews:reviews@localhost:5442/linella_reviews";
+  "postgres://reviews:reviews@localhost:5442/rrms";
 
 // Next.js dev server hot-reloads modules; reuse one pool so we don't leak
 // connections on every edit.

@@ -1,3 +1,4 @@
+import { companyName } from "@/lib/company";
 import type { ReviewSource, SourceLocation, SourceReview } from "./types";
 
 /**
@@ -63,11 +64,19 @@ export class SerpApiSource implements ReviewSource {
       .filter(Boolean);
 
     const found: SourceLocation[] = [];
-    // Maps search returns 20 per page; walk until Linella's stores run out.
+    /*
+     * A Maps search for a chain also returns whatever else sits nearby, so
+     * results are kept only when the name carries the brand. With no
+     * COMPANY_NAME configured there is nothing to match on, and everything the
+     * search returned is kept rather than silently discarding all of it.
+     */
+    const brand = companyName().toLowerCase();
+
+    // Maps search returns 20 per page; walk until the chain's stores run out.
     for (let start = 0; start < 200; start += 20) {
       const body = await this.request<{ local_results?: SerpPlace[] }>({
         engine: "google_maps",
-        q: process.env.SERPAPI_SEARCH_QUERY ?? "Linella",
+        q: process.env.SERPAPI_SEARCH_QUERY || companyName() || "supermarket",
         // Chișinău centre, zoom out far enough to cover the country.
         ll: process.env.SERPAPI_LL ?? "@47.0105,28.8638,9z",
         type: "search",
@@ -80,7 +89,7 @@ export class SerpApiSource implements ReviewSource {
       for (const place of page) {
         const externalId = place.place_id ?? place.data_id;
         if (!externalId || !place.title) continue;
-        if (!place.title.toLowerCase().includes("linella")) continue;
+        if (brand && !place.title.toLowerCase().includes(brand)) continue;
         if (explicit.length && !explicit.includes(externalId)) continue;
         found.push({
           externalId,

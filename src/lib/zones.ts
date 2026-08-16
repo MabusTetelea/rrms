@@ -116,7 +116,7 @@ const CHISINAU_SECTORS: { zone: ZoneId; keywords: string[] }[] = [
       /*
        * Both spellings are needed. Stripping the diacritic from "Râșcani"
        * yields "rascani", not "riscani" — â and î are their own letters, not
-       * decorated i's — so a listing named "Linella Râșcani" matched nothing
+       * decorated i's — so a listing named "Market Râșcani" matched nothing
        * here and fell through to the Centru default. It only looked right in
        * the demo data because that store's address mentions Kiev street.
        */

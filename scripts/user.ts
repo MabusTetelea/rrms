@@ -2,11 +2,11 @@
  * Account management from the command line — there's no self-signup, so this
  * is how operators get in.
  *
- *   npm run user -- add anna@linella.md "Anna Rusu" admin
+ *   npm run user -- add anna@example.com "Anna Rusu" admin
  *   npm run user -- list
- *   npm run user -- passwd anna@linella.md
- *   npm run user -- disable anna@linella.md
- *   npm run user -- enable anna@linella.md
+ *   npm run user -- passwd anna@example.com
+ *   npm run user -- disable anna@example.com
+ *   npm run user -- enable anna@example.com
  *   npm run user -- demo          # the two beta quick-login accounts
  *
  * Passwords are generated, printed once, and never stored in the clear. Nothing

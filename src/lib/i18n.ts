@@ -25,7 +25,7 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 };
 
 const en = {
-  brand: "Linella",
+  brand: "RRMS",
   product: "Review desk",
 
   nav: {
@@ -51,7 +51,7 @@ const en = {
 
   login: {
     title: "Sign in",
-    subtitle: "The review desk is for Linella staff.",
+    subtitle: "The review desk is for store staff.",
     pitch: "Every review, in one queue — answered in the language it was written in.",
     email: "Email",
     password: "Password",
@@ -239,7 +239,7 @@ const en = {
     noSyncs: "No syncs recorded yet.",
     google: {
       title: "Google account",
-      hint: "Connect the Google account that manages the Linella listings, and replies can be posted straight from here instead of copied across by hand.",
+      hint: "Connect the Google account that manages the chain's listings, and replies can be posted straight from here instead of copied across by hand.",
       connected: "Connected",
       notConnected: "Not connected",
       req: {
@@ -323,7 +323,7 @@ const en = {
 export type Dict = typeof en;
 
 const ro: Dict = {
-  brand: "Linella",
+  brand: "RRMS",
   product: "Ghișeu recenzii",
 
   nav: {
@@ -349,7 +349,7 @@ const ro: Dict = {
 
   login: {
     title: "Autentificare",
-    subtitle: "Ghișeul de recenzii este pentru echipa Linella.",
+    subtitle: "Ghișeul de recenzii este pentru echipa magazinului.",
     pitch: "Toate recenziile într-o singură listă — cu răspuns în limba în care au fost scrise.",
     email: "Email",
     password: "Parolă",
@@ -537,7 +537,7 @@ const ro: Dict = {
     noSyncs: "Nicio sincronizare înregistrată.",
     google: {
       title: "Cont Google",
-      hint: "Conectează contul Google care administrează paginile Linella, iar răspunsurile pot fi publicate direct de aici, fără copiere manuală.",
+      hint: "Conectează contul Google care administrează paginile lanțului, iar răspunsurile pot fi publicate direct de aici, fără copiere manuală.",
       connected: "Conectat",
       notConnected: "Neconectat",
       req: {
@@ -617,7 +617,7 @@ const ro: Dict = {
 };
 
 const ru: Dict = {
-  brand: "Linella",
+  brand: "RRMS",
   product: "Отзывы",
 
   nav: {
@@ -643,7 +643,7 @@ const ru: Dict = {
 
   login: {
     title: "Вход",
-    subtitle: "Отзывы — для сотрудников Linella.",
+    subtitle: "Отзывы — для сотрудников магазина.",
     pitch: "Все отзывы в одной очереди — ответ на том языке, на котором написан отзыв.",
     email: "Эл. почта",
     password: "Пароль",
@@ -831,7 +831,7 @@ const ru: Dict = {
     noSyncs: "Синхронизаций пока не было.",
     google: {
       title: "Аккаунт Google",
-      hint: "Подключите аккаунт Google, который управляет страницами Linella, и ответы можно будет публиковать прямо отсюда, без копирования вручную.",
+      hint: "Подключите аккаунт Google, который управляет страницами сети, и ответы можно будет публиковать прямо отсюда, без копирования вручную.",
       connected: "Подключён",
       notConnected: "Не подключён",
       req: {

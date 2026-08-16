@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RatingPrice } from "@/components/rating";
+import { storeShortName } from "@/lib/format";
 import { plural, type Dict, type Locale } from "@/lib/i18n";
 import type { ZoneStats } from "@/lib/queries";
 import { ZONE_META } from "@/lib/zones";
@@ -48,7 +49,7 @@ export function ZoneStrip({
           {zone.worstStore ? (
             <>
               <span aria-hidden="true"> · </span>
-              {t.dashboard.zoneWorst}: {zone.worstStore.name.replace(/^Linella\s*[—–-]\s*/, "")}{" "}
+              {t.dashboard.zoneWorst}: {storeShortName(zone.worstStore.name)}{" "}
               <span className="tabular">{zone.worstStore.avgRating?.toFixed(2)}</span>
             </>
           ) : null}

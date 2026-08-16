@@ -2,7 +2,7 @@ import type { ReplyCapableSource, SourceLocation, SourceReview } from "./types";
 
 /**
  * Google Business Profile — free and complete, but only if the Google account
- * behind the refresh token actually manages the Linella listings, and Google
+ * behind the refresh token actually manages the chain's listings, and Google
  * has approved your project for the Business Profile APIs.
  *
  * Auth is the offline refresh-token flow: run the consent screen once with

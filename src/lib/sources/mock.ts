@@ -4,6 +4,7 @@ import {
   MOCK_LOCATIONS,
   MOCK_REVIEW_TEXTS,
 } from "./mock-data";
+import { companyName } from "@/lib/company";
 import type { ReviewSource, SourceLocation, SourceReview } from "./types";
 
 /**
@@ -129,11 +130,20 @@ export class MockSource implements ReviewSource {
   }
 
   async listLocations(): Promise<SourceLocation[]> {
+    /*
+     * The fixture names stores after their area alone ("Botanica"), and the
+     * configured chain is prefixed here. That keeps the demo data
+     * brand-neutral in the repository while a real deployment's demo estate
+     * still reads like its own.
+     */
+    const brand = companyName();
+
     return MOCK_LOCATIONS.map((loc) => {
       const generated = generateForLocation(loc);
       const sum = generated.reduce((acc, rev) => acc + rev.rating, 0);
       return {
         ...loc,
+        name: brand ? `${brand} — ${loc.name}` : loc.name,
         reportedRating: Number((sum / generated.length).toFixed(1)),
         reportedReviewCount: generated.length,
         googleUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(

@@ -7,6 +7,6 @@ export default defineConfig({
   dbCredentials: {
     url:
       process.env.DATABASE_URL ??
-      "postgres://reviews:reviews@localhost:5442/linella_reviews",
+      "postgres://reviews:reviews@localhost:5442/rrms",
   },
 });

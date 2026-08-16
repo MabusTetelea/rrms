@@ -158,7 +158,7 @@ export default async function SettingsPage() {
                 {t.settings.accessCli}
               </p>
               <code className="mt-1.5 block max-w-lg overflow-x-auto rounded-[2px] border border-rule bg-surface px-3 py-2 font-mono text-[11px]">
-                npm run user -- add anna@linella.md &quot;Anna Rusu&quot; operator
+                npm run user -- add anna@example.com &quot;Anna Rusu&quot; operator
               </code>
 
               {isQuickLoginEnabled() ? (

@@ -1,18 +1,18 @@
 services:
   db:
     image: postgres:17-alpine
-    container_name: linella-reviews-db
+    container_name: rrms-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: reviews
       POSTGRES_PASSWORD: reviews
-      POSTGRES_DB: linella_reviews
+      POSTGRES_DB: rrms
     ports:
       - "5442:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U reviews -d linella_reviews"]
+      test: ["CMD-SHELL", "pg_isready -U reviews -d rrms"]
       interval: 5s
       timeout: 5s
       retries: 10

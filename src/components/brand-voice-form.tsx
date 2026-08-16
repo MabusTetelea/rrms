@@ -40,7 +40,7 @@ export function BrandVoiceForm({ voice, t }: { voice: BrandVoice; t: Dict }) {
         <input
           name="contactChannel"
           defaultValue={voice.contactChannel}
-          placeholder="feedback@linella.md"
+          placeholder="feedback@example.com"
           className="input"
         />
       </Field>
@@ -50,7 +50,7 @@ export function BrandVoiceForm({ voice, t }: { voice: BrandVoice; t: Dict }) {
           <input
             name="signature"
             defaultValue={voice.signature}
-            placeholder="Echipa Linella"
+            placeholder="Store team"
             className="input"
           />
         </Field>

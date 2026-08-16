@@ -13,8 +13,8 @@
  */
 
 export const QUICK_LOGIN_ACCOUNTS = [
-  { email: "admin@linella.md", role: "admin" as const },
-  { email: "operator@linella.md", role: "operator" as const },
+  { email: "admin@example.com", role: "admin" as const },
+  { email: "operator@example.com", role: "operator" as const },
 ];
 
 export function isQuickLoginEnabled(): boolean {

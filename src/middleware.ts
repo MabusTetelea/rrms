@@ -8,7 +8,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * can't validate the token against Postgres. The real check is requireUser()
  * in (app)/layout.tsx and in each server action.
  */
-const SESSION_COOKIE = "linella_session";
+const SESSION_COOKIE = "rrms_session";
 
 export function middleware(request: NextRequest) {
   if (request.cookies.has(SESSION_COOKIE)) return NextResponse.next();

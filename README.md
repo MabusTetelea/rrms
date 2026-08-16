@@ -1,9 +1,13 @@
-# Linella — Review desk
+# RRMS — Retail Review Management System
 
-An operator console for Google reviews across every Linella store. It pulls
-reviews in, ranks the stores by what customers actually say, drafts three reply
-options with an LLM through OpenRouter, and hands the operator a reply to copy
-into Google Business Profile.
+An operator console for the Google reviews of a retail chain. It pulls reviews
+in, ranks the stores by what customers actually say, drafts three reply options
+with an LLM through OpenRouter, and hands the operator a reply to copy into
+Google Business Profile.
+
+Brand-neutral: the chain it answers for is configuration, not code. Set
+`COMPANY_NAME` and `COMPANY_DESCRIPTION` and the prompts, the store discovery
+and the demo data all follow.
 
 **Nothing is ever published without a human.** By default the app only drafts
 and copies. Publishing straight to Google can be switched on (see below), and
@@ -30,7 +34,7 @@ npm run db:migrate && npm run db:seed
 npm run dev
 ```
 
-Then open http://localhost:3000. Postgres runs on port **5442** to stay out of
+Then open http://localhost:3010. Postgres runs on port **5442** to stay out of
 the way of anything already on 5432.
 
 Copy `.env.example` to `.env.local` and fill in what you need. Nothing is
@@ -42,7 +46,7 @@ Romanian/Russian reviews.
 There is no self-signup. Accounts are created from the command line:
 
 ```bash
-npm run user -- add anna@linella.md "Anna Rusu" admin
+npm run user -- add anna@example.com "Anna Rusu" admin
 ```
 
 The password is generated, printed once, and never stored in the clear. Other
@@ -63,7 +67,7 @@ crypto — no native dependency.
 npm run user -- demo
 ```
 
-Creates `admin@linella.md` and `operator@linella.md` and prints their passwords.
+Creates `admin@example.com` and `operator@example.com` and prints their passwords.
 With `ENABLE_QUICK_LOGIN=true` the login page shows one-click buttons for them,
 so the desk can be demoed without passing credentials around.
 
@@ -132,7 +136,7 @@ rest of the app doesn't know which ones are live. Each source gets its own
 | Source | Platform | Needs | Notes |
 | --- | --- | --- | --- |
 | `mock` | — | nothing | Default. Deterministic, so re-syncing never duplicates or shuffles data. |
-| `gbp` | Google | OAuth refresh token + Google approval | Free, but only if the account manages the Linella listings. |
+| `gbp` | Google | OAuth refresh token + Google approval | Free, but only if the account manages the chain's listings. |
 | `outscraper` | Google | `OUTSCRAPER_API_KEY` | Paid. Discovers stores by Maps search, or pin them with `OUTSCRAPER_PLACE_IDS`. |
 | `serpapi` | Google | `SERPAPI_API_KEY` | Paid, paginated. Better for keeping up than backfilling. |
 
@@ -202,7 +206,7 @@ merged onward.
 Sync from the dashboard button, the CLI, or a cron job:
 
 ```bash
-curl -X POST http://localhost:3000/api/sync -H "Authorization: Bearer $SYNC_SECRET"
+curl -X POST http://localhost:3010/api/sync -H "Authorization: Bearer $SYNC_SECRET"
 ```
 
 Add `?full=1` to re-scan every review instead of stopping at the newest one

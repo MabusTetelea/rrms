@@ -31,9 +31,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Linella — Review desk",
+  title: "RRMS — Review desk",
   description:
-    "Read every Google review across Linella stores and publish a reply that sounds like a person.",
+    "Read every Google review across a retail chain and publish a reply that sounds like a person.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

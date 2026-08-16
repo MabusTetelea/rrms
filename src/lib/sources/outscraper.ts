@@ -1,3 +1,4 @@
+import { companyName } from "@/lib/company";
 import type { ReviewSource, SourceLocation, SourceReview } from "./types";
 
 /**
@@ -99,7 +100,7 @@ export class OutscraperSource implements ReviewSource {
     // Explicit ids still need a metadata lookup to get names and addresses.
     const query = explicit.length
       ? explicit.join("\n")
-      : (process.env.OUTSCRAPER_SEARCH_QUERY ?? "Linella, Moldova");
+      : process.env.OUTSCRAPER_SEARCH_QUERY || companyName() || "supermarket";
 
     const body = await this.request<{ data: OutscraperPlace[][] | OutscraperPlace[] }>(
       "/maps/search-v3",
@@ -115,11 +116,14 @@ export class OutscraperSource implements ReviewSource {
       ? (body.data as OutscraperPlace[][]).flat()
       : (body.data as OutscraperPlace[]);
 
+    // A broad brand search also catches unrelated places. With no COMPANY_NAME
+    // configured there's nothing to match on, so nothing is filtered out.
+    const brand = companyName().toLowerCase();
+
     return flat
       .map(toLocation)
       .filter((l): l is SourceLocation => l !== null)
-      // A generic "Linella" search also catches unrelated places.
-      .filter((l) => l.name.toLowerCase().includes("linella"));
+      .filter((l) => !brand || l.name.toLowerCase().includes(brand));
   }
 
   async fetchReviews(location: SourceLocation, since?: Date): Promise<SourceReview[]> {
