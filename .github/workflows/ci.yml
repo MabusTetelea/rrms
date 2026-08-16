@@ -18,7 +18,12 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      # `npm install`, not `npm ci`. The lockfile is generated on Windows, so it
+      # records only the Windows build of the platform-specific binaries some
+      # dependencies ship. `npm ci` refuses a lockfile that doesn't already list
+      # the packages this runner needs; `npm install` resolves them for whatever
+      # platform it's on. Contributors on macOS would hit the same wall.
+      - run: npm install --no-audit --no-fund
 
       - name: Types
         run: npx tsc --noEmit
