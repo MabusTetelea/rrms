@@ -10,6 +10,7 @@ import { getLocale } from "@/lib/locale-server";
 import {
   countInboxByFilter,
   getInbox,
+  getRepliedToday,
   getReviewDetail,
   getStoreStats,
   INBOX_FILTERS,
@@ -66,10 +67,11 @@ export default async function InboxPage({
     ? Math.min(Math.max(showParam, INBOX_PAGE_SIZE), INBOX_MAX_WINDOW)
     : INBOX_PAGE_SIZE;
 
-  const [items, counts, stores] = await Promise.all([
+  const [items, counts, stores, repliedToday] = await Promise.all([
     getInbox({ filter, locationId: storeId, q, sort, limit: show }),
     countInboxByFilter(storeId, q),
     getStoreStats(),
+    getRepliedToday(),
   ]);
 
   // The queue can hold more than it is showing; the count above it has to say
@@ -129,7 +131,18 @@ export default async function InboxPage({
       <QueueKeys hrefs={queueHrefs} currentIndex={currentIndex} />
       <header className="shrink-0 border-b border-rule px-5 py-4 md:px-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold">{t.inbox.title}</h1>
+          <div className="flex items-baseline gap-2.5">
+            <h1 className="text-xl font-semibold">{t.inbox.title}</h1>
+            {/* What you've actually done today. A count, not a target — the
+                number goes up because you answered something, which is true,
+                rather than measuring you against a goal nobody set. */}
+            <span className="font-mono text-[11px] text-ink-faint">
+              <span className={`tabular ${repliedToday > 0 ? "text-good" : ""}`}>
+                {repliedToday}
+              </span>{" "}
+              {t.inbox.respondedToday}
+            </span>
+          </div>
           <InboxFilters
             active={filter}
             filters={INBOX_FILTERS.map((value) => ({

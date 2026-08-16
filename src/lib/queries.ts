@@ -737,6 +737,26 @@ export async function getStoreTrend(locationId: string, months = 6) {
   }));
 }
 
+/**
+ * Replies sent today, across the desk.
+ *
+ * Counted from `replies` rather than from review status, so it means "work you
+ * did today" — a review Google already had an answer to, or one that was
+ * skipped, doesn't flatter the number.
+ *
+ * Deliberately a plain count rather than progress towards a target. A bar
+ * filling towards 20 invents a goal nobody set; a number that went up because
+ * you answered something is just true.
+ */
+export async function getRepliedToday(): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(replies)
+    .where(sql`${replies.createdAt} >= date_trunc('day', now())`);
+
+  return row?.n ?? 0;
+}
+
 export async function getRecentSyncs(limit = 8) {
   return db.select().from(syncRuns).orderBy(desc(syncRuns.startedAt)).limit(limit);
 }

@@ -14,6 +14,7 @@ import { getBrandVoice } from "@/lib/settings";
 import { googleSetup } from "@/lib/google-setup";
 import { getPublishingSource, getReviewSources, SOURCE_NAMES } from "@/lib/sources";
 
+// Nothing here is worth caching: it reports the live state of the connections.
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
@@ -56,8 +57,15 @@ export default async function SettingsPage() {
     <>
       <PageHeader title={t.settings.title} />
 
-      <div className="grid gap-10 px-5 py-6 md:px-8 md:py-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
-        <div className="space-y-10">
+      {/*
+        One column, not two. The page holds two kinds of thing: the handful you
+        would ever change — how replies are written, who can sign in, whether
+        Google is connected — and a set of readouts you consult when something
+        looks wrong. They were side by side as equals, so the page read as
+        twelve things to deal with. The readouts now live under Advanced.
+      */}
+      <div className="px-5 py-6 md:px-8 md:py-8">
+        <div className="max-w-2xl space-y-10">
           <section>
             <h2 className="text-[15px] font-semibold">{t.settings.voiceTitle}</h2>
             <p className="mt-0.5 mb-5 max-w-lg text-xs text-ink-faint">
@@ -163,7 +171,28 @@ export default async function SettingsPage() {
           ) : null}
         </div>
 
-        <aside className="space-y-8">
+        {/*
+          Native <details> — no JavaScript, no state, and it works before the
+          page has finished loading. Shut by default: these are readouts for
+          when something looks wrong, not settings.
+        */}
+        <details className="group mt-10 max-w-2xl border-t border-rule pt-4">
+          <summary className="cursor-pointer list-none text-[15px] font-semibold marker:content-none">
+            <span className="inline-flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="font-mono text-[11px] text-ink-faint transition-transform group-open:rotate-90"
+              >
+                ▸
+              </span>
+              {t.settings.advanced}
+            </span>
+            <span className="mt-0.5 block pl-5 text-xs font-normal text-ink-faint">
+              {t.settings.advancedHint}
+            </span>
+          </summary>
+
+          <div className="mt-6 grid gap-8 pl-5 sm:grid-cols-2">
           <section>
             <h2 className="text-[15px] font-semibold">{t.settings.sourceTitle}</h2>
             <p className="mt-0.5 text-xs text-ink-faint">{t.settings.sourceHint}</p>
@@ -250,7 +279,8 @@ export default async function SettingsPage() {
               </ul>
             )}
           </section>
-        </aside>
+          </div>
+        </details>
       </div>
     </>
   );
