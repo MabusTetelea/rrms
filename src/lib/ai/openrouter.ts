@@ -127,7 +127,7 @@ export async function chatJson<T>(
  * Not every model honours response_format strictly; some wrap JSON in prose or
  * a ```json fence. Salvage the object rather than failing the operator's click.
  */
-function parseJson<T>(raw: string): T {
+export function parseJson<T>(raw: string): T {
   const cleaned = raw
     .trim()
     .replace(/^```(?:json)?\s*/i, "")

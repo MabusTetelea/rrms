@@ -7,31 +7,19 @@ import { users } from "@/db/schema";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession, destroySession } from "@/lib/auth/session";
 import { isQuickLoginAccount, isQuickLoginEnabled } from "@/lib/auth/quick-login";
+import { hit, reset } from "@/lib/rate-limit";
 
 export type LoginResult = { ok: false; error: "invalid" | "throttled" | "unknown" };
 
-/**
- * Crude per-address throttle. In-memory, so it resets on restart and doesn't
- * span instances — enough to make online guessing pointless, not a substitute
- * for a real rate limiter at the edge.
- */
-const attempts = new Map<string, { count: number; first: number }>();
-const WINDOW_MS = 10 * 60_000;
-const MAX_ATTEMPTS = 10;
+/** Enough to make online password guessing pointless. See lib/rate-limit. */
+const LOGIN_LIMIT = { max: 10, windowMs: 10 * 60_000 };
 
-function throttled(key: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(key);
-  if (!entry || now - entry.first > WINDOW_MS) {
-    attempts.set(key, { count: 1, first: now });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > MAX_ATTEMPTS;
+function throttled(email: string): boolean {
+  return !hit(`login:${email}`, LOGIN_LIMIT).ok;
 }
 
-function clearThrottle(key: string) {
-  attempts.delete(key);
+function clearThrottle(email: string) {
+  reset(`login:${email}`);
 }
 
 export async function loginAction(formData: FormData): Promise<LoginResult> {

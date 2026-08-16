@@ -44,7 +44,14 @@ function normalize(value: string | null | undefined): string {
   return (value ?? "")
     .toLowerCase()
     .normalize("NFD")
-    // Strip combining marks so "Râșcani" and "Riscani" both match.
+    /*
+     * Strip combining marks, so "Chișinău" matches "chisinau".
+     *
+     * Note what this does NOT do: â and î lose their accent to become a and i,
+     * which are different letters. "Râșcani" becomes "rascani", never
+     * "riscani". Any keyword for a name containing â or î has to be listed in
+     * the form this produces.
+     */
     .replace(/[̀-ͯ]/g, "");
 }
 
@@ -106,6 +113,14 @@ const CHISINAU_SECTORS: { zone: ZoneId; keywords: string[] }[] = [
     zone: "chisinau-riscani",
     keywords: [
       "riscani",
+      /*
+       * Both spellings are needed. Stripping the diacritic from "Râșcani"
+       * yields "rascani", not "riscani" — â and î are their own letters, not
+       * decorated i's — so a listing named "Linella Râșcani" matched nothing
+       * here and fell through to the Centru default. It only looked right in
+       * the demo data because that store's address mentions Kiev street.
+       */
+      "rascani",
       "kiev",
       "moscova",
       "ceucari",
@@ -183,7 +198,10 @@ const REGION_BY_CITY: Record<string, ZoneId> = {
   leova: "sud",
   cantemir: "sud",
   vulcanesti: "sud",
-  stefan_voda: "sud",
+  // Keys are matched against normalize()'d text, which separates words with a
+  // space. Written with an underscore this could never match, and every Ștefan
+  // Vodă store fell through to "unassigned".
+  "stefan voda": "sud",
 };
 
 /**
